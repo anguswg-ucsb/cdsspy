@@ -27,7 +27,7 @@ def get_ref_county(
     while more_pages == True:
         
         # Check if a specific county name was requested
-        if(county == None):
+        if county is None:
              # print(url)
             url = base + "format=json&dateFormat=spaceSepToSeconds" + "&county=&pageSize="  + str(page_size) + "&pageIndex=" + str(page_index)
         else:
@@ -35,7 +35,7 @@ def get_ref_county(
             url = base + "format=json&dateFormat=spaceSepToSeconds" + "&county=" +  county +"&pageSize="  + str(page_size) + "&pageIndex=" + str(page_index)
         
         # If an API key is provided, add it to query URL
-        if(api_key != None):
+        if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
         
