@@ -14,8 +14,25 @@ def get_structures(
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
 
-    # if wdid is None:
+    # if a list of WDIDs, collapse list
+    if type(wdid) == list:
 
+        wdid = [str(x) for x in wdid]
+
+        # join list of county names into single string seperated by plus sign
+        wdid = "%2C+".join(wdid)
+    
+        # replace white space w/ plus sign
+        wdid  = wdid.replace(" ", "%2C+")
+    else:
+        # if wdid is an int or float, convert to string
+        if type(wdid) == int or type(wdid) == float:
+            wdid = str(wdid)
+            print("converted int/float to string")
+            print(wdid)
+        if type(wdid) == str:
+            # replace white space w/ plus sign
+            wdid  = wdid.replace(" ", "%2C+")
 
     # maximum records per page
     page_size  = 50000
@@ -32,17 +49,25 @@ def get_structures(
     
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
+
+        # create string tuple
+        url = (base, 
+        "format=json&dateFormat=spaceSepToSeconds",
+        "&county=", (county),
+        "&division=", (division),
+        "&gnisId=", (gnis_id),
+        "&waterDistrict=", (water_district),
+        "&wdid=", (wdid),
+        "&pageSize=", str(page_size),
+        "&pageIndex=", str(page_index)
+        )
         
-        # Check if a specific county name was requested
-        if(county == None):
-             # print(url)
-            url = base + "format=json&dateFormat=spaceSepToSeconds" + "&county=&pageSize="  + str(page_size) + "&pageIndex=" + str(page_index)
-        else:
-            # print(url)
-            url = base + "format=json&dateFormat=spaceSepToSeconds" + "&county=" +  county +"&pageSize="  + str(page_size) + "&pageIndex=" + str(page_index)
-        
+        # concatenate non-None values into query URL
+        url = [x for x in url if x is not None]
+        url = "".join(url)
+
         # If an API key is provided, add it to query URL
-        if(api_key != None):
+        if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
         
