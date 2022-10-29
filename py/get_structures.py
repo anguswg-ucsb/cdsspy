@@ -2,7 +2,6 @@ import pandas as pd
 import requests
 import numpy as np
 
-
 def get_structures(
     county         = None,
     division       = None,
@@ -11,10 +10,30 @@ def get_structures(
     wdid           = None,
     api_key        = None
 ):
+    """Return list of administrative structures
+    Make a request to the api/v2/structures endpoint to locate administrative structures by division, county, water_district, GNIS, or WDID.
+    Args:
+        county (_type_, optional): string, indicating the county to query. Defaults to None.
+        division (_type_, optional): numeric, string, indicating the water division to query. Defaults to None.
+        gnis_id (_type_, optional): string, water source - Geographic Name Information System ID. Defaults to None.
+        water_district (_type_, optional): numeric, string, indicating the water district to query. Defaults to None.
+        wdid (_type_, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
+        api_key (_type_, optional): string, If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
 
+    Returns:
+        pandas dataframe object: dataframe of administrative structures
+    """
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
 
+    # convert numeric division to string
+    if type(division) == int or type(division) == float:
+        division = str(division)
+
+      # convert numeric water_district to string
+    if type(water_district) == int or type(water_district) == float:
+        water_district = str(water_district)
+    
     # if a list of WDIDs, collapse list
     if type(wdid) == list or type(wdid) is tuple:
 

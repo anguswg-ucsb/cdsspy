@@ -11,6 +11,20 @@ def get_telemetry_ts(
     include_third_party = True,
     api_key             = None
     ):
+    """Request Telemetry station timeseries data
+
+    Args:
+        abbrev (_type_, optional): string indicating station abbreviation. Defaults to None.
+        parameter (str, optional): string . Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations.. Defaults to "DISCHRG".
+        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        timescale (str, optional): string indicating data type to return, either "raw", "hour", or "day". Defaults to "day".
+        include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
+        api_key (_type_, optional): string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of telemetry station timeseries data
+    """
 
     # if no abbreviation is given, return error
     if abbrev is None:
@@ -30,8 +44,6 @@ def get_telemetry_ts(
         start_date = start_date.strftime("%m-%d-%Y")
         start_date = start_date.replace("-", "%2F")
 
-    # print(start_date)
-
     # if no end date is given, default to current date
     if end_date is None: 
         end_date   = datetime.date.today()
@@ -41,10 +53,7 @@ def get_telemetry_ts(
         end_date   = datetime.datetime.strptime(end_date, '%Y-%m-%d')
         end_date   = end_date.strftime("%m-%d-%Y")
         end_date   = end_date.replace("-", "%2F")
-        
-    # print("Start date: " + start_date)
-    # print("Start date: " + end_date)
-
+    
     # Set correct name of date field for querying raw data
     if timescale == "raw": 
         # raw date field name
@@ -55,7 +64,6 @@ def get_telemetry_ts(
         
     # maximum records per page
     page_size  = 50000
-    # page_size  = 1000
 
     # initialize empty dataframe to store data from multiple pages
     data_df    = pd.DataFrame()
@@ -68,20 +76,21 @@ def get_telemetry_ts(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-
+        
         # create string tuple
-        url = (base, 
-        "format=json&dateFormat=spaceSepToSeconds&fields=abbrev%2Cparameter%2C", date_field, "%2CmeasValue%2CmeasUnit",
-        "&abbrev=", abbrev,
-        "&endDate=", end_date,
-        "&startDate=", start_date,
-        "&includeThirdParty=", str(include_third_party).lower(),
-        "&parameter=", parameter,
+        url = (base,
+        "format=json&dateFormat=spaceSepToSeconds",
+        "&county=", (county),
+        "&division=", (division),
+        "&gnisId=", (gnis_id),
+        "&waterDistrict=", (water_district),
+        "&wdid=", (wdid),
         "&pageSize=", str(page_size),
         "&pageIndex=", str(page_index)
         )
-        
-        # join tuble into single string
+
+        # concatenate non-None values into query URL
+        url = [x for x in url if x is not None]
         url = "".join(url)
         
         # If an API key is provided, add it to query URL
