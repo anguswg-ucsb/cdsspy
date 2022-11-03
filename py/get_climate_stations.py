@@ -11,10 +11,6 @@ def get_climate_stations(
     api_key             = None
     ):
     
-    # if no abbreviation is given, return error
-    if site_id is None:
-        return print("Invalid 'site_id' parameter")
-    
     # if a list of site_ids, collapse list
     if type(site_id) == list or type(site_id) == tuple:
         site_id = [str(x) for x in site_id]
@@ -50,7 +46,7 @@ def get_climate_stations(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-        
+
         # create query URL string tuple
         url = (base,
         "format=json&dateFormat=spaceSepToSeconds",
@@ -91,3 +87,7 @@ def get_climate_stations(
     
     return data_df
     
+
+stat = get_climate_stations(
+    county              = "Adams"
+)
