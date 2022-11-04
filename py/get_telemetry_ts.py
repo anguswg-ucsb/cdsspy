@@ -2,6 +2,43 @@ import pandas as pd
 import requests
 import datetime
 
+def parse_date(
+    date   = None,
+    start  = True,
+    format =  "%m-%d-%Y"
+    ):
+
+    # if the date is the starting date
+    if start == True:
+
+        # if no start_date is given, default to 1900-01-01
+        if date is None: 
+            date = "1900-01-01"
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F")
+        else:
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F") 
+
+    # if date is the ending date
+    else:
+
+        # if no end date is given, default to current date
+        if date is None: 
+            date   = datetime.date.today()
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+        else:
+            date   = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+
+    return date
+
+
+
 def get_telemetry_ts(
     abbrev              = None,
     parameter           = "DISCHRG",
@@ -33,26 +70,19 @@ def get_telemetry_ts(
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
 
-    # if no start_date is given, default to 1900-01-01
-    if start_date is None: 
-        start_date = "1900-01-01"
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-        start_date = start_date.strftime("%m-%d-%Y")
-        start_date = start_date.replace("-", "%2F")
-    else:
-        start_date = datetime.datetime.strptime(start_date, '%Y-%m-%d')
-        start_date = start_date.strftime("%m-%d-%Y")
-        start_date = start_date.replace("-", "%2F")
+    # parse start_date into query string format
+    start_date = parse_date(
+        date   = start_date,
+        start  = True,
+        format = "%m-%d-%Y"
+    )
 
-    # if no end date is given, default to current date
-    if end_date is None: 
-        end_date   = datetime.date.today()
-        end_date   = end_date.strftime("%m-%d-%Y")
-        end_date   = end_date.replace("-", "%2F")
-    else:
-        end_date   = datetime.datetime.strptime(end_date, '%Y-%m-%d')
-        end_date   = end_date.strftime("%m-%d-%Y")
-        end_date   = end_date.replace("-", "%2F")
+    # parse end_date into query string format
+    end_date = parse_date(
+        date   = end_date,
+        start  = False,
+        format = "%m-%d-%Y"
+        )
     
     # Set correct name of date field for querying raw data
     if timescale == "raw": 
@@ -97,7 +127,7 @@ def get_telemetry_ts(
         if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
-      
+
         # make API call
         cdss_req = requests.get(url)
         
@@ -120,7 +150,7 @@ def get_telemetry_ts(
             # remove old measDate column
             del cdss_df['measDate']
 
-         # bind data from this page
+        # bind data from this page
         data_df = pd.concat([data_df, cdss_df])
         
         # Check if more pages to get to continue/stop while loop

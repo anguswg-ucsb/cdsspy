@@ -7,10 +7,6 @@ def collapse_vector(
     sep  = "%2C+"
     ):
 
-    # if no vector is provided
-    if vect is None:
-        return print("Invalid Nonetype 'vect' parameter.\nPlease enter a valid vector")
-
     # if a list of vects, collapse list
     if type(vect) == list or type(vect) == tuple:
         vect = [str(x) for x in vect]
@@ -30,6 +26,39 @@ def collapse_vector(
     
     return vect
             
+def parse_date(
+    date   = None,
+    start  = True,
+    format =  "%m-%d-%Y"
+    ):
+
+    # if the date is the starting date
+    if start == True:
+
+        # if no start_date is given, default to 1900-01-01
+        if date is None: 
+            date = "1900-01-01"
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F")
+        else:
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F") 
+    # if date is the ending date
+    else:
+
+        # if no end date is given, default to current date
+        if date is None: 
+            date   = datetime.date.today()
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+        else:
+            date   = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+
+    return date
 
 
 def date_stream():
