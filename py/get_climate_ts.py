@@ -6,11 +6,7 @@ def collapse_vector(
     vect = None, 
     sep  = "%2C+"
     ):
-
-    # if no vector is provided
-    # if vect is None:
-    #     return print("Invalid Nonetype 'vect' parameter.\nPlease enter a valid vector")
-
+    
     # if a list of vects, collapse list
     if type(vect) == list or type(vect) == tuple:
         vect = [str(x) for x in vect]
@@ -74,7 +70,20 @@ def get_climate_ts_day(
     end_date            = None,
     api_key             = None
     ):
-    
+    """Request daily climate data
+
+    Args:
+        station_number (_type_, optional): string, climate data station number. Defaults to None.
+        site_id (_type_, optional): string, tuple or list of climate station site IDs. Defaults to None.
+        param (_type_, optional): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of climate station daily timeseries data
+    """
+
     # list of valid parameters
     param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
 
@@ -108,7 +117,7 @@ def get_climate_ts_day(
         start  = False,
         format = "%m-%d-%Y"
         )
-        
+
     # maximum records per page
     page_size  = 50000
 
@@ -128,6 +137,119 @@ def get_climate_ts_day(
         "format=json&dateFormat=spaceSepToSeconds",
         "&min-measDate=", start_date,
         "&max-measDate=", end_date,
+        "&stationNum=", station_number,
+        "&siteId=", site_id,
+        "&measType=", param,
+        "&pageSize=", str(page_size),
+        "&pageIndex=", str(page_index)
+        )
+        
+        #  concatenate non-None values into query URL
+        url = [x for x in url if x is not None]
+        url = "".join(url)
+        
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        cdss_req = requests.get(url)
+
+        # extract dataframe from list column
+        cdss_df  = cdss_req.json() 
+        cdss_df  = pd.DataFrame(cdss_df)
+        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+
+        # convert measDate columns to 'date' and pd datetime type
+        cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+        
+        # Check if more pages to get to continue/stop while loop
+        if(len(cdss_df.index) < page_size): 
+            more_pages = False
+        else:
+            page_index += 1
+    
+    return data_df
+
+
+def get_climate_ts_month(
+    station_number      = None,
+    site_id             = None,
+    param               = None,
+    start_date          = None,
+    end_date            = None,
+    api_key             = None
+    ):
+    """Request monthly climate data
+
+    Args:
+        station_number (_type_, optional): string, climate data station number. Defaults to None.
+        site_id (_type_, optional): string, tuple or list of climate station site IDs. Defaults to None.
+        param (_type_, optional): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of climate station monthly timeseries data
+    """
+    # list of valid parameters
+    param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
+
+    # if parameter is not in list of valid parameters
+    if param not in param_lst:
+        return print("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
+
+    # if no site_id and no station_number are given, return error
+    if site_id is None and station_number is None:
+        return print("Invalid 'site_id' or 'station_number' parameters")
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
+
+    # collapse list, tuple, vector of site_id into query formatted string
+    site_id = collapse_vector(
+        vect = site_id, 
+        sep  = "%2C+"
+        )
+
+    # parse start_date into query string format
+    start_date = parse_date(
+        date   = start_date,
+        start  = True,
+        format = "%Y"
+    )
+
+    # parse end_date into query string format
+    end_date = parse_date(
+        date   = end_date,
+        start  = False,
+        format = "%Y"
+        )
+
+    # maximum records per page
+    page_size  = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df    = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    # Loop through pages until last page of data is found, binding each responce dataframe together
+    while more_pages == True:
+        # create string tuple
+        url = (base,
+        "format=json&dateFormat=spaceSepToSeconds",
+        "&min-calYear=", start_year,
+        "&max-calYear=", end_year,
         "&stationNum=", station_number,
         "&siteId=", site_id,
         "&measType=", param,

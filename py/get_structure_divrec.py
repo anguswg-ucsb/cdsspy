@@ -6,11 +6,7 @@ def collapse_vector(
     vect = None, 
     sep  = "%2C+"
     ):
-
-    # # if no vector is provided
-    # if vect is None:
-    #     return print("Invalid Nonetype 'vect' parameter.\nPlease enter a valid vector")
-
+    
     # if a list of vects, collapse list
     if type(vect) == list or type(vect) == tuple:
         vect = [str(x) for x in vect]

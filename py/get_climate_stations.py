@@ -87,7 +87,3 @@ def get_climate_stations(
     
     return data_df
     
-
-stat = get_climate_stations(
-    county              = "Adams"
-)
