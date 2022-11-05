@@ -51,13 +51,13 @@ def get_telemetry_ts(
     """Request Telemetry station timeseries data
 
     Args:
-        abbrev (_type_, optional): string indicating station abbreviation. Defaults to None.
-        parameter (str, optional): string . Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations.. Defaults to "DISCHRG".
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): string indicating data type to return, either "raw", "hour", or "day". Defaults to "day".
+        abbrev (str, optional): Station abbreviation. Defaults to None.
+        parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations.. Defaults to "DISCHRG".
+        start_date (str, optional): Date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): Date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to "day".
         include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
-        api_key (_type_, optional): string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of telemetry station timeseries data

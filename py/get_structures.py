@@ -13,12 +13,12 @@ def get_structures(
     """Return list of administrative structures
     Make a request to the api/v2/structures endpoint to locate administrative structures by division, county, water_district, GNIS, or WDID.
     Args:
-        county (_type_, optional): string, indicating the county to query. Defaults to None.
-        division (_type_, optional): numeric, string, indicating the water division to query. Defaults to None.
-        gnis_id (_type_, optional): string, water source - Geographic Name Information System ID. Defaults to None.
-        water_district (_type_, optional): numeric, string, indicating the water district to query. Defaults to None.
-        wdid (_type_, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
-        api_key (_type_, optional): string, If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        county (str, optional): Indicating the county to query. Defaults to None.
+        division (int, str, optional): Indicating the water division to query. Defaults to None.
+        gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
+        water_district (int, str, optional): Indicating the water district to query. Defaults to None.
+        wdid (string, tuple or list, optional): WDIDs code of structure. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of administrative structures

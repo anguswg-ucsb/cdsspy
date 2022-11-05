@@ -72,11 +72,11 @@ def get_structure_divrecday(
     """Request Structure Daily Diversion/Release Records
 
     Args:
-        wdid (_type_, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
+        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
         wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of daily structure diversion/releases records 
@@ -172,11 +172,11 @@ def get_structure_divrecmonth(
     """Request Structure Monthly Diversion/Release Records
 
     Args:
-        wdid (_type_, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
+        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
         wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of monthly structure diversion/releases records 
@@ -271,11 +271,11 @@ def get_structure_divrecyear(
     """Request Structure Annual Diversion/Release Records
 
     Args:
-        wdid (_type_, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
+        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
         wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of annual structure diversion/releases records 
