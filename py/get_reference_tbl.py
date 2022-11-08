@@ -147,7 +147,16 @@ def get_ref_waterdivisions(
     division       = None, 
     api_key        = None
     ):
-    
+    """Return water divisions reference table
+
+    Args:
+        division (str, optional): Division to query, if no division is given, dataframe of all water divisions is returned. Defaults to None.
+        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe: dataframe of Colorado water divisions
+    """
+
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/waterdivision/?"
 
