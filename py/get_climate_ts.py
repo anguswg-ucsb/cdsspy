@@ -129,6 +129,8 @@ def get_climate_ts_day(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
+    
+    print("Retrieving climate station daily timeseries data")
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
@@ -242,6 +244,8 @@ def get_climate_ts_month(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
+
+    print("Retrieving climate station monthly timeseries data")
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:

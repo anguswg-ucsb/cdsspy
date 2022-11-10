@@ -103,6 +103,8 @@ def get_telemetry_ts(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
+    
+    print("Retrieving telemetry station timeseries data\nTimescale:", timescale)
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
@@ -110,11 +112,11 @@ def get_telemetry_ts(
         # create string tuple
         url = (base,
         "format=json&dateFormat=spaceSepToSeconds",
-        "&county=", (county),
-        "&division=", (division),
-        "&gnisId=", (gnis_id),
-        "&waterDistrict=", (water_district),
-        "&wdid=", (wdid),
+        "&abbrev=", abbrev,
+        "&endDate=", end_date,
+        "&startDate=", start_date,
+        "&includeThirdParty=", str(include_third_party).lower(),
+        "&parameter=", parameter,
         "&pageSize=", str(page_size),
         "&pageIndex=", str(page_index)
         )
@@ -139,16 +141,11 @@ def get_telemetry_ts(
         # convert measDateTime and measDate columns to 'date' and pd datetime type
         if timescale == "raw":
             # convert measDate column to datetime column
-            cdss_df['date'] = pd.to_datetime(cdss_df['measDateTime'])
+            cdss_df['measDateTime'] = pd.to_datetime(cdss_df['measDateTime'])
 
-            # remove old measDate column
-            del cdss_df['measDateTime']
         else: 
             # convert measDate column to datetime column
-            cdss_df['date'] = pd.to_datetime(cdss_df['measDate'])
-            
-            # remove old measDate column
-            del cdss_df['measDate']
+            cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
 
         # bind data from this page
         data_df = pd.concat([data_df, cdss_df])

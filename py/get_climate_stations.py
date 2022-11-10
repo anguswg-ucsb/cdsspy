@@ -44,6 +44,8 @@ def get_climate_stations(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
+    print("Retrieving climate station data")
+
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
