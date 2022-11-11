@@ -73,12 +73,12 @@ def get_climate_ts_day(
     """Request daily climate data
 
     Args:
-        station_number (_type_, optional): string, climate data station number. Defaults to None.
-        site_id (_type_, optional): string, tuple or list of climate station site IDs. Defaults to None.
-        param (_type_, optional): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        station_number (str, optional): string, climate data station number. Defaults to None.
+        site_id (str, tuple, list, optional): string, tuple or list of climate station site IDs. Defaults to None.
+        param (str): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of climate station daily timeseries data

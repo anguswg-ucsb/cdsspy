@@ -25,36 +25,48 @@ def collapse_vector(
     
     return vect
 
-def get_climate_stations(
+def get_sw_stations(
+    abbrev              = None,
     county              = None,
     division            = None,
     station_name        = None,
-    site_id             = None,
+    usgs_id             = None,
     water_district      = None,
     api_key             = None
     ):
-    """Request Climate Station information
+    """Request Surface Water Station information
 
     Args:
-        county (str, optional): County to query for climate stations. Defaults to None.
-        division (int, str, optional):  Water division to query for climate stations. Defaults to None.
-        station_name (str, optional): string, climate station name. Defaults to None.
-        site_id (str, tuple, list, optional): string, tuple or list of site IDs. Defaults to None.
-        water_district (int, str, optional): Water district to query for climate stations. Defaults to None.
+        abbrev (str, optional):  string, tuple or list of station abbreviations. Defaults to None.
+        county (str, optional): County to query for surface water stations. Defaults to None.
+        division (int, str, optional):  Water division to query for surface water stations. Defaults to None.
+        station_name (str, optional): string, surface water station name. Defaults to None.
+        usgs_id (str, optional):  string, tuple or list of USGS site IDs. Defaults to None.
+        water_district (int, str , optional): Water district to query for surface water stations. Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
 
     Returns:
-        pandas dataframe object: dataframe of climate station data
+        pandas dataframe object: dataframe of surface water station data
     """
-    # collapse site_id list, tuple, vector of site_id into query formatted string
-    site_id = collapse_vector(
-        vect = site_id, 
+
+    # if no site_id and no station_number are given, return error
+    if abbrev is None and county is None and division is None and station_name is None and usgs_id is None and water_district is None:
+        return print("Invalid 'abbrev', 'county', 'division', 'station_name', 'usgs_id', or 'water_district', parameters")
+
+    # collapse abbreviation list, tuple, vector of site_id into query formatted string
+    abbrev = collapse_vector(
+        vect = abbrev, 
         sep  = "%2C+"
         )
 
+    # collapse USGS ID list, tuple, vector of site_id into query formatted string
+    usgs_id = collapse_vector(
+        vect = usgs_id, 
+        sep  = "%2C+"
+        )
     #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestations/?"
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/?"
 
     # maximum records per page
     page_size = 50000
@@ -68,18 +80,19 @@ def get_climate_stations(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving climate station data")
+    print("Retrieving surface water station data")
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-
+        
         # create query URL string tuple
         url = (base,
         "format=json&dateFormat=spaceSepToSeconds",
+        "&abbrev=", abbrev,
         "&county=", county,
         "&division=", division,
         "&stationName=", station_name,
-        "&siteId=", site_id,
+        "&usgsSiteId=", usgs_id,
         "&waterDistrict=", water_district,
         "&pageSize=", str(page_size),
         "&pageIndex=", str(page_index)
@@ -112,4 +125,3 @@ def get_climate_stations(
             page_index += 1
     
     return data_df
-    
