@@ -1,6 +1,29 @@
 import pandas as pd
 import requests
-import numpy as np
+
+def collapse_vector(
+    vect = None, 
+    sep  = "%2C+"
+    ):
+    
+    # if a list of vects, collapse list
+    if type(vect) == list or type(vect) == tuple:
+        vect = [str(x) for x in vect]
+        # join list into single string seperated by 'sep'
+        vect = sep.join(vect)
+        
+        # replace white space w/ 'sep'
+        vect = vect.replace(" ", sep)
+    else:
+        # if vect is an int or float, convert to string
+        if type(vect) == int or type(vect) == float:
+            vect = str(vect)
+        
+        if type(vect) == str:
+            # replace white space w/ plus sign
+            vect = vect.replace(" ", sep)
+    
+    return vect
 
 def get_structures(
     county         = None,
@@ -30,29 +53,16 @@ def get_structures(
     if type(division) == int or type(division) == float:
         division = str(division)
 
-      # convert numeric water_district to string
+    # convert numeric water_district to string
     if type(water_district) == int or type(water_district) == float:
         water_district = str(water_district)
-    
-    # if a list of WDIDs, collapse list
-    if type(wdid) == list or type(wdid) is tuple:
 
-        wdid = [str(x) for x in wdid]
-
-        # join list of county names into single string seperated by plus sign
-        wdid = "%2C+".join(wdid)
-
-        # replace white space w/ plus sign
-        wdid = wdid.replace(" ", "%2C+")
-    else:
-        # if wdid is an int or float, convert to string
-        if type(wdid) == int or type(wdid) == float:
-            wdid = str(wdid)
-
-        if type(wdid) == str:
-            # replace white space w/ plus sign
-            wdid = wdid.replace(" ", "%2C+")
-
+    # collapse WDID list, tuple, vector of site_id into query formatted string
+    wdid = collapse_vector(
+        vect = wdid, 
+        sep  = "%2C+"
+        )
+        
     # maximum records per page
     page_size = 50000
 

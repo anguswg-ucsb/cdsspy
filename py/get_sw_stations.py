@@ -65,6 +65,7 @@ def get_sw_stations(
         vect = usgs_id, 
         sep  = "%2C+"
         )
+        
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/?"
 
