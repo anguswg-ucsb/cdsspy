@@ -70,7 +70,7 @@ def get_climate_ts_day(
     end_date            = None,
     api_key             = None
     ):
-    """Request daily climate data
+    """Return daily climate data
 
     Args:
         station_number (str, optional): string, climate data station number. Defaults to None.
@@ -186,7 +186,7 @@ def get_climate_ts_month(
     end_date            = None,
     api_key             = None
     ):
-    """Request monthly climate data
+    """Return monthly climate data
 
     Args:
         station_number (str, optional): string, climate data station number. Defaults to None.
