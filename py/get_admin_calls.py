@@ -71,7 +71,7 @@ def get_admin_calls(
     api_key             = None
     ):
     """Return active/historic administrative calls data
-    Make a request to the api/v2/administrativecalls endpoint to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
+    Make a request to the api/v2/administrative calls endpoint to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
 
     Args:
         division (int, str, optional): Water division to query for administrative calls. Defaults to None.
@@ -132,7 +132,7 @@ def get_admin_calls(
 
     print("Retrieving surface water station data")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
         # create query URL string tuple
         url = (base,
