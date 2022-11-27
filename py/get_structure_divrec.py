@@ -417,7 +417,8 @@ def get_structure_stage(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
-        # Loop through pages until last page of data is found, binding each responce dataframe together
+    
+    # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
         # create string tuple
