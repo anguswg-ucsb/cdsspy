@@ -1,0 +1,14 @@
+LICENSE
+README.md
+setup.py
+cdsspy/src/cdsspy.egg-info/PKG-INFO
+cdsspy/src/cdsspy.egg-info/SOURCES.txt
+cdsspy/src/cdsspy.egg-info/dependency_links.txt
+cdsspy/src/cdsspy.egg-info/requires.txt
+cdsspy/src/cdsspy.egg-info/top_level.txt
+cdsspy/src/cdsspy.py
+cdsspy/src/cdsspy.egg-info/PKG-INFO
+cdsspy/src/cdsspy.egg-info/SOURCES.txt
+cdsspy/src/cdsspy.egg-info/dependency_links.txt
+cdsspy/src/cdsspy.egg-info/requires.txt
+cdsspy/src/cdsspy.egg-info/top_level.txt
