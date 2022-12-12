@@ -15,7 +15,7 @@ def parse_date(
     if start == True:
 
         # if no start_date is given, default to 1900-01-01
-        if date is None: 
+        if date is None:
             date = "1900-01-01"
             date = datetime.datetime.strptime(date, '%Y-%m-%d')
             date = date.strftime(format)
@@ -762,6 +762,81 @@ def get_gw_gplogs_wells(
             "&waterDistrict=", water_district,
             "&designatedBasin=", designated_basin,
             "&managementDistrict=", management_district,
+            "&pageSize=", str(page_size),
+            "&pageIndex=", str(page_index)
+            )
+
+        # concatenate non-None values into query URL
+        url = [x for x in url if x is not None]
+        url = "".join(url)
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        cdss_req = requests.get(url)
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
+
+def get_gw_gplogs_geologpicks(
+    wellid              = None,
+    api_key             = None
+    ):
+    """Return Groundwater Geophysical Log picks by well ID
+
+    Args:
+        wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
+
+    Returns:
+        pandas dataframe object: dataframe of groundwater geophysical log picks
+    """
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/geoplogpicks/?"
+
+    # If no well ID is provided
+    if wellid is None:
+        return print("Invalid 'wellid' parameter")
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving groundwater geophysical log picks data")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string tuple
+        url = (
+            base,
+            "format=json&dateFormat=spaceSepToSeconds",
+            "&wellId=", wellid,
             "&pageSize=", str(page_size),
             "&pageIndex=", str(page_index)
             )
@@ -2545,4 +2620,247 @@ def get_telemetry_ts(
 
     return data_df
 
+def get_water_rights_netamount(
+    county              = None,
+    division            = None,
+    water_district      = None,
+    wdid                = None,
+    api_key             = None
+    ):
+    """Return water rights net amounts data
+
+    Args:
+        county (str, optional): County to query for water rights. Defaults to None.
+        division (int, str, optional):  Water division to query for water rights. Defaults to None.
+        water_district (str, optional): Water district to query for water rights. Defaults to None.
+        wdid (str, optional): WDID code of water right. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of water rights net amounts data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [county, division, water_district, wdid]):
+        return print("Invalid 'county', 'division', 'water_district', or 'wdid' parameters")
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving groundwater geophysical log picks data")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+        # create query URL string
+        url = f'{base}format=json&dateFormat=spaceSepToSeconds&county={county or ""}&division={division or ""}&waterDistrict={water_district or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        cdss_req = requests.get(url)
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
     
+wdid                = 45
+admin_no            = 4677
+start_date          = "1934-03-27"
+end_date            = None
+api_key             = None
+
+# parse start_date into query string format
+start = parse_date(
+    date   = start_date,
+    start  = True,
+    format = "%m-%d-%Y"
+)
+
+# parse end_date into query string format
+end = parse_date(
+    date   = end_date,
+    start  = False,
+    format = "%m-%d-%Y"
+    )
+# # create query URL string
+# url = f'{base}format=json&dateFormat=spaceSepToSeconds&adminNo={admin_no or ""}&endDate={end or ""}&startDate={start or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
+
+def get_call_analysis_wdid(
+    wdid                = None,
+    admin_no            = None,
+    start_date          = None,
+    end_date            = None,
+    api_key             = None
+    ):
+    """Return call analysis by WDID from analysis services API
+
+    Args:
+        wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of call services by WDID
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [wdid, admin_no]):
+        return print("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
+    
+    # parse start_date into query string format
+    start = parse_date(
+        date   = start_date,
+        start  = True,
+        format = "%m-%d-%Y"
+        )
+
+    # parse end_date into query string format
+    end = parse_date(
+        date   = end_date,
+        start  = False,
+        format = "%m-%d-%Y"
+        )
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving call anaylsis data by WDID")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = f'{base}format=json&dateFormat=spaceSepToSeconds&adminNo={admin_no or ""}&endDate={end or ""}&startDate={start or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        cdss_req = requests.get(url)
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
+
+def get_source_route_framework(
+    division            = None,
+    gnis_name           = None,
+    water_district      = None,
+    api_key             = None
+    ):
+    """Return call analysis by WDID from analysis services API
+
+    Args:
+        division (int, str, optional):  Water division to query for water rights. Defaults to None.
+        gnis_name (str, optional): GNIS Name to query and retrieve DWR source route frameworks. Defaults to None.
+        water_district (str, optional): Water district to query for water rights. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of source route framework
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [division, gnis_name, water_district]):
+        return print("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteframework/?"
+    
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving DWR source route frameworks")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = f'{base}format=json&dateFormat=spaceSepToSeconds&division={division or ""}&gnisName={gnis_name or ""}&waterDistrict={water_district or ""}&pageSize={page_size}&pageIndex={page_index}'
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        cdss_req = requests.get(url)
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
