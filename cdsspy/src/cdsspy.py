@@ -5,65 +5,6 @@ import pandas as pd
 import requests
 import datetime
 
-def parse_date(
-    date   = None,
-    start  = True,
-    format =  "%m-%d-%Y"
-    ):
-
-    # if the date is the starting date
-    if start == True:
-
-        # if no start_date is given, default to 1900-01-01
-        if date is None:
-            date = "1900-01-01"
-            date = datetime.datetime.strptime(date, '%Y-%m-%d')
-            date = date.strftime(format)
-            date = date.replace("-", "%2F")
-        else:
-            date = datetime.datetime.strptime(date, '%Y-%m-%d')
-            date = date.strftime(format)
-            date = date.replace("-", "%2F") 
-
-    # if date is the ending date
-    else:
-
-        # if no end date is given, default to current date
-        if date is None: 
-            date   = datetime.date.today()
-            date   = date.strftime(format)
-            date   = date.replace("-", "%2F")
-        else:
-            date   = datetime.datetime.strptime(date, '%Y-%m-%d')
-            date   = date.strftime(format)
-            date   = date.replace("-", "%2F")
-
-    return date
-
-def collapse_vector(
-    vect = None, 
-    sep  = "%2C+"
-    ):
-    
-    # if a list of vects, collapse list
-    if type(vect) == list or type(vect) == tuple:
-        vect = [str(x) for x in vect]
-        # join list into single string seperated by 'sep'
-        vect = sep.join(vect)
-        
-        # replace white space w/ 'sep'
-        vect = vect.replace(" ", sep)
-    else:
-        # if vect is an int or float, convert to string
-        if type(vect) == int or type(vect) == float:
-            vect = str(vect)
-        
-        if type(vect) == str:
-            # replace white space w/ plus sign
-            vect = vect.replace(" ", sep)
-    
-    return vect
-
 def get_admin_calls(
     division            = None,
     location_wdid       = None,
@@ -869,6 +810,89 @@ def get_gw_gplogs_geologpicks(
 
     return data_df
 
+def get_reference_tbl(
+    table_name = None,
+    api_key    = None
+    ):
+    """Return Reference Table reference table
+    
+    Args:
+        table_namDee (str, optional): Name of the reference table to return. One of: "county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags". Defaults to none.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+    
+    Returns:
+        pandas dataframe: dataframe of CDSS reference tables
+    """
+    # list of valid parameters
+    tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
+
+    # if parameter is not in list of valid parameters
+    if table_name not in tbl_lst:
+        return print("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
+
+    # retrieve county reference table
+    if table_name == "county":
+        ref_table = get_ref_county(
+            api_key = api_key
+            )
+        return ref_table
+    
+    # retrieve water districts reference table
+    if table_name == "waterdistricts":
+        ref_table = get_ref_waterdistricts(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve water divisions reference table
+    if table_name == "waterdivisions":
+        ref_table = get_ref_waterdivisions(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve management districts reference table
+    if table_name == "managementdistricts":
+        ref_table = get_ref_managementdistricts(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve designated basins reference table
+    if table_name == "designatedbasins":
+        ref_table = get_ref_designatedbasins(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve telemetry station parameters reference table
+    if table_name == "telemetryparams":
+        ref_table = get_ref_telemetry_params(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve climate station parameters reference table
+    if table_name == "climateparams":
+        ref_table = get_ref_climate_params(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve diversion record types reference table
+    if table_name == "divrectypes":
+        ref_table = get_ref_divrectypes(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve station flags reference table
+    if table_name == "flags":
+        ref_table = get_ref_stationflags(
+            api_key = api_key
+            )
+        return ref_table
+        
 def get_ref_county(
     county  = None, 
     api_key = None
@@ -1494,90 +1518,6 @@ def get_ref_stationflags(
             page_index += 1
 
     return data_df
-
-
-def get_reference_tbl(
-    table_name = None,
-    api_key    = None
-    ):
-    """Return Reference Table reference table
-    
-    Args:
-        table_namDee (str, optional): Name of the reference table to return. One of: "county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags". Defaults to none.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-    
-    Returns:
-        pandas dataframe: dataframe of CDSS reference tables
-    """
-    # list of valid parameters
-    tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
-
-    # if parameter is not in list of valid parameters
-    if table_name not in tbl_lst:
-        return print("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
-
-    # retrieve county reference table
-    if table_name == "county":
-        ref_table = get_ref_county(
-            api_key = api_key
-            )
-        return ref_table
-    
-    # retrieve water districts reference table
-    if table_name == "waterdistricts":
-        ref_table = get_ref_waterdistricts(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve water divisions reference table
-    if table_name == "waterdivisions":
-        ref_table = get_ref_waterdivisions(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve management districts reference table
-    if table_name == "managementdistricts":
-        ref_table = get_ref_managementdistricts(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve designated basins reference table
-    if table_name == "designatedbasins":
-        ref_table = get_ref_designatedbasins(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve telemetry station parameters reference table
-    if table_name == "telemetryparams":
-        ref_table = get_ref_telemetry_params(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve climate station parameters reference table
-    if table_name == "climateparams":
-        ref_table = get_ref_climate_params(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve diversion record types reference table
-    if table_name == "divrectypes":
-        ref_table = get_ref_divrectypes(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve station flags reference table
-    if table_name == "flags":
-        ref_table = get_ref_stationflags(
-            api_key = api_key
-            )
-        return ref_table
 
 def get_structure_divrecday(
     wdid          = None,
@@ -2689,28 +2629,6 @@ def get_water_rights_netamount(
             page_index += 1
 
     return data_df
-    
-wdid                = 45
-admin_no            = 4677
-start_date          = "1934-03-27"
-end_date            = None
-api_key             = None
-
-# parse start_date into query string format
-start = parse_date(
-    date   = start_date,
-    start  = True,
-    format = "%m-%d-%Y"
-)
-
-# parse end_date into query string format
-end = parse_date(
-    date   = end_date,
-    start  = False,
-    format = "%m-%d-%Y"
-    )
-# # create query URL string
-# url = f'{base}format=json&dateFormat=spaceSepToSeconds&adminNo={admin_no or ""}&endDate={end or ""}&startDate={start or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
 
 def get_call_analysis_wdid(
     wdid                = None,
@@ -2864,3 +2782,62 @@ def get_source_route_framework(
             page_index += 1
 
     return data_df
+
+def parse_date(
+    date   = None,
+    start  = True,
+    format =  "%m-%d-%Y"
+    ):
+
+    # if the date is the starting date
+    if start == True:
+
+        # if no start_date is given, default to 1900-01-01
+        if date is None:
+            date = "1900-01-01"
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F")
+        else:
+            date = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date = date.strftime(format)
+            date = date.replace("-", "%2F") 
+
+    # if date is the ending date
+    else:
+
+        # if no end date is given, default to current date
+        if date is None: 
+            date   = datetime.date.today()
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+        else:
+            date   = datetime.datetime.strptime(date, '%Y-%m-%d')
+            date   = date.strftime(format)
+            date   = date.replace("-", "%2F")
+
+    return date
+
+def collapse_vector(
+    vect = None, 
+    sep  = "%2C+"
+    ):
+    
+    # if a list of vects, collapse list
+    if type(vect) == list or type(vect) == tuple:
+        vect = [str(x) for x in vect]
+        # join list into single string seperated by 'sep'
+        vect = sep.join(vect)
+        
+        # replace white space w/ 'sep'
+        vect = vect.replace(" ", sep)
+    else:
+        # if vect is an int or float, convert to string
+        if type(vect) == int or type(vect) == float:
+            vect = str(vect)
+        
+        if type(vect) == str:
+            # replace white space w/ plus sign
+            vect = vect.replace(" ", sep)
+    
+    return vect
