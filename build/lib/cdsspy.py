@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "0.0.2"
+__version__ = "0.0.3"
 
 import pandas as pd
 import requests
@@ -810,6 +810,89 @@ def get_gw_gplogs_geologpicks(
 
     return data_df
 
+def get_reference_tbl(
+    table_name = None,
+    api_key    = None
+    ):
+    """Return Reference Table reference table
+    
+    Args:
+        table_namDee (str, optional): Name of the reference table to return. One of: "county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags". Defaults to none.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+    
+    Returns:
+        pandas dataframe: dataframe of CDSS reference tables
+    """
+    # list of valid parameters
+    tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
+
+    # if parameter is not in list of valid parameters
+    if table_name not in tbl_lst:
+        return print("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
+
+    # retrieve county reference table
+    if table_name == "county":
+        ref_table = get_ref_county(
+            api_key = api_key
+            )
+        return ref_table
+    
+    # retrieve water districts reference table
+    if table_name == "waterdistricts":
+        ref_table = get_ref_waterdistricts(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve water divisions reference table
+    if table_name == "waterdivisions":
+        ref_table = get_ref_waterdivisions(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve management districts reference table
+    if table_name == "managementdistricts":
+        ref_table = get_ref_managementdistricts(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve designated basins reference table
+    if table_name == "designatedbasins":
+        ref_table = get_ref_designatedbasins(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve telemetry station parameters reference table
+    if table_name == "telemetryparams":
+        ref_table = get_ref_telemetry_params(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve climate station parameters reference table
+    if table_name == "climateparams":
+        ref_table = get_ref_climate_params(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve diversion record types reference table
+    if table_name == "divrectypes":
+        ref_table = get_ref_divrectypes(
+            api_key = api_key
+            )
+        return ref_table
+
+    # retrieve station flags reference table
+    if table_name == "flags":
+        ref_table = get_ref_stationflags(
+            api_key = api_key
+            )
+        return ref_table
+        
 def get_ref_county(
     county  = None, 
     api_key = None
@@ -1435,90 +1518,6 @@ def get_ref_stationflags(
             page_index += 1
 
     return data_df
-
-
-def get_reference_tbl(
-    table_name = None,
-    api_key    = None
-    ):
-    """Return Reference Table reference table
-    
-    Args:
-        table_namDee (str, optional): Name of the reference table to return. One of: "county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags". Defaults to none.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-    
-    Returns:
-        pandas dataframe: dataframe of CDSS reference tables
-    """
-    # list of valid parameters
-    tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
-
-    # if parameter is not in list of valid parameters
-    if table_name not in tbl_lst:
-        return print("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
-
-    # retrieve county reference table
-    if table_name == "county":
-        ref_table = get_ref_county(
-            api_key = api_key
-            )
-        return ref_table
-    
-    # retrieve water districts reference table
-    if table_name == "waterdistricts":
-        ref_table = get_ref_waterdistricts(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve water divisions reference table
-    if table_name == "waterdivisions":
-        ref_table = get_ref_waterdivisions(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve management districts reference table
-    if table_name == "managementdistricts":
-        ref_table = get_ref_managementdistricts(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve designated basins reference table
-    if table_name == "designatedbasins":
-        ref_table = get_ref_designatedbasins(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve telemetry station parameters reference table
-    if table_name == "telemetryparams":
-        ref_table = get_ref_telemetry_params(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve climate station parameters reference table
-    if table_name == "climateparams":
-        ref_table = get_ref_climate_params(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve diversion record types reference table
-    if table_name == "divrectypes":
-        ref_table = get_ref_divrectypes(
-            api_key = api_key
-            )
-        return ref_table
-
-    # retrieve station flags reference table
-    if table_name == "flags":
-        ref_table = get_ref_stationflags(
-            api_key = api_key
-            )
-        return ref_table
 
 def get_structure_divrecday(
     wdid          = None,
@@ -2783,7 +2782,7 @@ def get_source_route_framework(
             page_index += 1
 
     return data_df
-    
+
 def parse_date(
     date   = None,
     start  = True,
