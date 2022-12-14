@@ -2689,28 +2689,6 @@ def get_water_rights_netamount(
             page_index += 1
 
     return data_df
-    
-wdid                = 45
-admin_no            = 4677
-start_date          = "1934-03-27"
-end_date            = None
-api_key             = None
-
-# parse start_date into query string format
-start = parse_date(
-    date   = start_date,
-    start  = True,
-    format = "%m-%d-%Y"
-)
-
-# parse end_date into query string format
-end = parse_date(
-    date   = end_date,
-    start  = False,
-    format = "%m-%d-%Y"
-    )
-# # create query URL string
-# url = f'{base}format=json&dateFormat=spaceSepToSeconds&adminNo={admin_no or ""}&endDate={end or ""}&startDate={start or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
 
 def get_call_analysis_wdid(
     wdid                = None,
