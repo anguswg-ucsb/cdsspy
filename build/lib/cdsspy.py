@@ -102,7 +102,21 @@ def get_admin_calls(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -128,7 +142,7 @@ def get_climate_stations(
     water_district      = None,
     api_key             = None
     ):
-    """Request Climate Station information
+    """Return Climate Station information
 
     Args:
         county (str, optional): County to query for climate stations. Defaults to None.
@@ -190,7 +204,21 @@ def get_climate_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -207,6 +235,106 @@ def get_climate_stations(
             page_index += 1
     
     return data_df
+
+def get_climate_frostdates(
+    station_number      = None,
+    start_date          = None,
+    end_date            = None,
+    api_key             = None
+    ):
+    """Return climate stations frost dates 
+
+    Args:
+        station_number (str, optional): climate data station number. Defaults to None.
+        start_date (str, optional): date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of climate station frost dates data
+    """
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
+
+    # parse start_date into query string format
+    start_year = parse_date(
+        date   = start_date,
+        start  = True,
+        format = "%Y"
+    )
+
+    # parse end_date into query string format
+    end_year = parse_date(
+        date   = end_date,
+        start  = False,
+        format = "%Y"
+        )
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving climate station frost dates data")
+
+    # Loop through pages until last page of data is found, binding each responce dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-calYear={start_year or ""}' 
+            f'&max-calYear={end_year or ""}'
+            f'&stationNum={station_number or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+        
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if (len(cdss_df.index) < page_size):
+            more_pages = False
+        else:
+            page_index += 1
+    
+    return data_df
+
 
 def get_climate_ts_day(
     station_number      = None,
@@ -280,21 +408,17 @@ def get_climate_ts_day(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&min-measDate=", start_date,
-        "&max-measDate=", end_date,
-        "&stationNum=", station_number,
-        "&siteId=", site_id,
-        "&measType=", param,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        #  concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-measDate={start_date or ""}' 
+            f'&max-measDate={end_date or ""}'
+            f'&stationNum={station_number or ""}' 
+            f'&siteId={site_id or ""}'
+            f'&measType={param or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -302,7 +426,21 @@ def get_climate_ts_day(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -324,6 +462,13 @@ def get_climate_ts_day(
     return data_df
 
 
+tmp = get_climate_ts_day(
+site_id             = "USC00055984p",
+param               = "MaxTemp",
+start_date          = "1888-01-01",
+end_date            = "2020-01-01",
+api_key             = None
+)
 def get_climate_ts_month(
     station_number      = None,
     site_id             = None,
@@ -417,7 +562,21 @@ def get_climate_ts_month(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -521,7 +680,21 @@ def get_gw_wl_wells(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -616,7 +789,21 @@ def get_gw_wl_wellmeasures(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -717,7 +904,21 @@ def get_gw_gplogs_wells(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -792,7 +993,21 @@ def get_gw_gplogs_geologpicks(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -944,7 +1159,21 @@ def get_ref_county(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1017,7 +1246,21 @@ def get_ref_waterdistricts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1087,7 +1330,21 @@ def get_ref_waterdivisions(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1156,7 +1413,21 @@ def get_ref_managementdistricts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1225,7 +1496,21 @@ def get_ref_designatedbasins(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1294,7 +1579,21 @@ def get_ref_telemetry_params(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1363,7 +1662,21 @@ def get_ref_climate_params(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1432,7 +1745,21 @@ def get_ref_divrectypes(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1501,7 +1828,21 @@ def get_ref_stationflags(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1600,7 +1941,21 @@ def get_structure_divrecday(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1700,7 +2055,21 @@ def get_structure_divrecmonth(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1800,7 +2169,21 @@ def get_structure_divrecyear(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1898,7 +2281,21 @@ def get_structure_stage(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1989,9 +2386,23 @@ def get_structures(
         if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
-
+        
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2080,29 +2491,39 @@ def get_sw_ts_day(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&abbrev=", abbrev,
-        "&min-measDate=", start_date,
-        "&max-measDate=", end_date,
-        "&stationNum=", station_number,
-        "&usgsSiteId=", usgs_id,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}'
+            f'&min-measDate={start_date or ""}'
+            f'&max-measDate={end_date or ""}'
+            f'&stationNum={station_number or ""}'
+            f'&usgsSiteId={usgs_id or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2194,29 +2615,39 @@ def get_sw_ts_month(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&abbrev=", abbrev,
-        "&min-calYear=", start_date,
-        "&max-calYear=", end_date,
-        "&stationNum=", station_number,
-        "&usgsSiteId=", usgs_id,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}'
+            f'&min-calYear={start_date or ""}'
+            f'&max-calYear={end_date or ""}'
+            f'&stationNum={station_number or ""}'
+            f'&usgsSiteId={usgs_id or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2305,21 +2736,17 @@ def get_sw_ts_wyear(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&abbrev=", abbrev,
-        "&min-waterYear=", start_date,
-        "&max-waterYear=", end_date,
-        "&stationNum=", station_number,
-        "&usgsSiteId=", usgs_id,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}'
+            f'&min-waterYear={start_date or ""}'
+            f'&max-waterYear={end_date or ""}'
+            f'&stationNum={station_number or ""}'
+            f'&usgsSiteId={usgs_id or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2327,7 +2754,21 @@ def get_sw_ts_wyear(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2398,24 +2839,19 @@ def get_telemetry_stations(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create query URL string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&abbrev=", abbrev,
-        "&county=", county,
-        "&division=", division,
-        "&gnisId=", gnis_id,
-        "&includeThirdParty=true",
-        "&usgsStationId=", usgs_id,
-        "&waterDistrict=", water_district,
-        "&wdid=", wdid,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}'
+            f'&county={county or ""}'
+            f'&division={division or ""}'
+            f'&gnisId={gnis_id or ""}'
+            f'&includeThirdParty=true'
+            f'&usgsStationId={usgs_id or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2423,7 +2859,21 @@ def get_telemetry_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2493,7 +2943,10 @@ def get_telemetry_ts(
     else:
         # hour and day date field name
         date_field = "measDate"
-        
+    
+    # Create True or False include 3rd party string
+    third_party_str = str(include_third_party).lower()
+
     # maximum records per page
     page_size  = 50000
 
@@ -2511,21 +2964,16 @@ def get_telemetry_ts(
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
         
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&abbrev=", abbrev,
-        "&endDate=", end_date,
-        "&startDate=", start_date,
-        "&includeThirdParty=", str(include_third_party).lower(),
-        "&parameter=", parameter,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}'
+            f'&endDate={end_date or ""}'
+            f'&startDate={start_date or ""}'
+            f'&includeThirdParty={third_party_str or ""}'
+            f'&parameter={parameter or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2533,7 +2981,21 @@ def get_telemetry_ts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
         
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2603,8 +3065,16 @@ def get_water_rights_netamount(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
+
         # create query URL string
-        url = f'{base}format=json&dateFormat=spaceSepToSeconds&county={county or ""}&division={division or ""}&waterDistrict={water_district or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}'
+            f'&division={division or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2612,7 +3082,21 @@ def get_water_rights_netamount(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2688,7 +3172,14 @@ def get_call_analysis_wdid(
     while more_pages == True:
 
         # create query URL string
-        url = f'{base}format=json&dateFormat=spaceSepToSeconds&adminNo={admin_no or ""}&endDate={end or ""}&startDate={start or ""}&wdid={wdid or ""}&pageSize={page_size}&pageIndex={page_index}'
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&adminNo={admin_no or ""}'
+            f'&endDate={end or ""}'
+            f'&startDate={start or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2696,7 +3187,21 @@ def get_call_analysis_wdid(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2757,7 +3262,13 @@ def get_source_route_framework(
     while more_pages == True:
 
         # create query URL string
-        url = f'{base}format=json&dateFormat=spaceSepToSeconds&division={division or ""}&gnisName={gnis_name or ""}&waterDistrict={water_district or ""}&pageSize={page_size}&pageIndex={page_index}'
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&division={division or ""}'
+            f'&gnisName={gnis_name or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2765,7 +3276,21 @@ def get_source_route_framework(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call
-        cdss_req = requests.get(url)
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2841,3 +3366,5 @@ def collapse_vector(
             vect = vect.replace(" ", sep)
     
     return vect
+    
+
