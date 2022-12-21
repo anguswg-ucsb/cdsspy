@@ -78,20 +78,16 @@ def get_admin_calls(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-        # create query URL string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&min-dateTimeSet=", start_date,
-        "&max-dateTimeSet=", end_date,
-        "&division=", division,
-        "&callNumber=", call_number,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-dateTimeSet={start_date or ""}' 
+            f'&max-dateTimeSet={end_date or ""}'
+            f'&division={division or ""}' 
+            f'&callNumber={call_number or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # Construct query URL w/ location WDID
         if location_wdid is not None:
@@ -182,22 +178,17 @@ def get_climate_stations(
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
-        # create query URL string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&county=", county,
-        "&division=", division,
-        "&stationName=", station_name,
-        "&siteId=", site_id,
-        "&waterDistrict=", water_district,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}' 
+            f'&division={division or ""}'
+            f'&stationName={station_name or ""}' 
+            f'&siteId={site_id or ""}'
+            f'&waterDistrict={water_district or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
@@ -540,21 +531,17 @@ def get_climate_ts_month(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&min-calYear=", start_year,
-        "&max-calYear=", end_year,
-        "&stationNum=", station_number,
-        "&siteId=", site_id,
-        "&measType=", param,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        #  concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-calYear={start_year or ""}' 
+            f'&max-calYear={end_year or ""}'
+            f'&stationNum={station_number or ""}' 
+            f'&siteId={site_id or ""}' 
+            f'&measType={param or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -656,23 +643,17 @@ def get_gw_wl_wells(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create query URL string tuple
+        # create query URL string
         url = (
-            base,
-            "format=json&dateFormat=spaceSepToSeconds",
-            "&county=", county,
-            "&wellId=", wellid,
-            "&division=", division,
-            "&waterDistrict=", water_district,
-            "&designatedBasin=", designated_basin,
-            "&managementDistrict=", management_district,
-            "&pageSize=", str(page_size),
-            "&pageIndex=", str(page_index)
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}' 
+            f'&wellId={wellid or ""}'
+            f'&division={division or ""}' 
+            f'&waterDistrict={water_district or ""}' 
+            f'&designatedBasin={designated_basin or ""}' 
+            f'&managementDistrict={management_district or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
             )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -768,20 +749,14 @@ def get_gw_wl_wellmeasures(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create query URL string tuple
+        # create query URL string
         url = (
-            base,
-            "format=json&dateFormat=spaceSepToSeconds",
-            "&min-measurementDate=", start,
-            "&max-measurementDate=", end,
-            "&wellId=", wellid,
-            "&pageSize=", str(page_size),
-            "&pageIndex=", str(page_index)
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-measurementDate={start or ""}' 
+            f'&min-measurementDate={end or ""}'
+            f'&wellId={wellid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
             )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -879,24 +854,18 @@ def get_gw_gplogs_wells(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-
-        # create query URL string tuple
+        
+        # create query URL string
         url = (
-            base,
-            "format=json&dateFormat=spaceSepToSeconds",
-            "&county=", county,
-            "&wellId=", wellid,
-            "&division=", division,
-            "&waterDistrict=", water_district,
-            "&designatedBasin=", designated_basin,
-            "&managementDistrict=", management_district,
-            "&pageSize=", str(page_size),
-            "&pageIndex=", str(page_index)
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}' 
+            f'&wellId={wellid or ""}'
+            f'&division={division or ""}' 
+            f'&waterDistrict={water_district or ""}' 
+            f'&designatedBasin={designated_basin or ""}' 
+            f'&managementDistrict={management_district or ""}' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
             )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -974,18 +943,12 @@ def get_gw_gplogs_geologpicks(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create query URL string tuple
+        # create query URL string
         url = (
-            base,
-            "format=json&dateFormat=spaceSepToSeconds",
-            "&wellId=", wellid,
-            "&pageSize=", str(page_size),
-            "&pageIndex=", str(page_index)
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&wellId={wellid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
             )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1140,18 +1103,13 @@ def get_ref_county(
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
-        
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&county=", county,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
 
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1227,19 +1185,14 @@ def get_ref_waterdistricts(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&division=", division,
-        "&waterDistrict=", water_district,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&division={division or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
@@ -1312,18 +1265,13 @@ def get_ref_waterdivisions(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&division=", division,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&division={division or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
@@ -1395,17 +1343,12 @@ def get_ref_managementdistricts(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&managementDistrictName=", management_district,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&managementDistrictName={management_district or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1478,17 +1421,12 @@ def get_ref_designatedbasins(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json",
-        "&designatedBasinName=", designated_basin,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&designatedBasinName={designated_basin or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1561,17 +1499,12 @@ def get_ref_telemetry_params(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json",
-        "&parameter=", param,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json'
+            f'&parameter={param or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1644,17 +1577,12 @@ def get_ref_climate_params(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json",
-        "&measType=", param,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json'
+            f'&measType={param or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1727,18 +1655,13 @@ def get_ref_divrectypes(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json",
-        "&divRecType=", divrectype,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
+        # create query URL string
+        url = (
+            f'{base}format=json'
+            f'&divRecType={divrectype or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
-        
         # If an API key is provided, add it to query URL
         if api_key is not None:
             # Construct query URL w/ API key
@@ -1810,17 +1733,12 @@ def get_ref_stationflags(
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json",
-        "&flag=", flag,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json'
+            f'&flag={flag or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
         
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -1920,20 +1838,15 @@ def get_structure_divrecday(
         # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base, 
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&wcIdentifier=*", wc_identifier,
-        "*&min-dataMeasDate=", start_date,
-        "&max-dataMeasDate=", end_date,
-        "&wdid=", wdid,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&wcIdentifier=*{wc_identifier or ""}'
+            f'*&min-dataMeasDate={start_date or ""}'
+            f'&max-dataMeasDate={end_date or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2034,20 +1947,16 @@ def get_structure_divrecmonth(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-        # create query URL string tuple
-        url = (base, 
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&wcIdentifier=*", wc_identifier,
-        "*&min-dataMeasDate=", start_date,
-        "&max-dataMeasDate=", end_date,
-        "&wdid=", wdid,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&wcIdentifier=*{wc_identifier or ""}'
+            f'*&min-dataMeasDate={start_date or ""}'
+            f'&max-dataMeasDate={end_date or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2148,20 +2057,16 @@ def get_structure_divrecyear(
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
-        # create query URL string tuple
-        url = (base, 
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&wcIdentifier=*", wc_identifier,
-        "*&min-dataMeasDate=", start_date,
-        "&max-dataMeasDate=", end_date,
-        "&wdid=", wdid,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-        
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&wcIdentifier=*{wc_identifier or ""}'
+            f'*&min-dataMeasDate={start_date or ""}'
+            f'&max-dataMeasDate={end_date or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2261,19 +2166,14 @@ def get_structure_stage(
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base, 
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&min-dataMeasDate=", start_date,
-        "&max-dataMeasDate=", end_date,
-        "&wdid=", wdid,
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&min-dataMeasDate={start_date or ""}'
+            f'&max-dataMeasDate={end_date or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
@@ -2366,21 +2266,16 @@ def get_structures(
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
-        # create string tuple
-        url = (base,
-        "format=json&dateFormat=spaceSepToSeconds",
-        "&county=", (county),
-        "&division=", (division),
-        "&gnisId=", (gnis_id),
-        "&waterDistrict=", (water_district),
-        "&wdid=", (wdid),
-        "&pageSize=", str(page_size),
-        "&pageIndex=", str(page_index)
-        )
-
-        # concatenate non-None values into query URL
-        url = [x for x in url if x is not None]
-        url = "".join(url)
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}'
+            f'&division={division or ""}'
+            f'&gnisId={gnis_id or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
 
         # If an API key is provided, add it to query URL
         if api_key is not None:
