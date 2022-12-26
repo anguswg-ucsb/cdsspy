@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.0.1"
+__version__ = "1.0.2"
 
 import pandas as pd
 import requests
@@ -452,14 +452,6 @@ def get_climate_ts_day(
     
     return data_df
 
-
-tmp = get_climate_ts_day(
-site_id             = "USC00055984p",
-param               = "MaxTemp",
-start_date          = "1888-01-01",
-end_date            = "2020-01-01",
-api_key             = None
-)
 def get_climate_ts_month(
     station_number      = None,
     site_id             = None,
@@ -3262,4 +3254,3 @@ def collapse_vector(
     
     return vect
     
-
