@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.0.1
+Version: 1.0.2
 Summary: Python package for accessing CDSS API web services
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
@@ -52,4 +52,50 @@ Install the latest version of `cdsspy` from PyPI:
 
 ``` 
 pip install cdsspy
+```
+<br>
+
+# Example: Telemetry site data
+**Identify query inputs using reference tables**
+
+The **get_reference_tbl()** function will return tables that makes it easier to know what information should be supplied to the data retrieval functions in cdsspy. For more information on the exact reference tables click [here](https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml).
+
+Letâ€™s locate the parameters available at telemetry stations.
+
+```python
+# available parameters for telemetry stations
+telemetry_params = cdsspy.get_reference_tbl(
+    table_name = "telemetryparams"
+    )
+```
+<br>
+
+**Locate stations**
+
+We can use the **get_\<endpoint>\_stations()** functions to identify the stations within a given spatial extent (point/polygon), water district, division, or county. Station data can also be retrieved by providing a specific station abbreviation, GNIS ID, USGS ID, or WDID.
+
+```python
+# identify telemetry stations in water district 6
+stations  = cdsspy.get_telemetry_stations(
+    water_district = "6"
+    )
+```
+
+**Retrieve Telemetry station timeseries data**
+
+The **get_\<endpoint>\_ts()** functions retrieve timeseries data from the CDSS API.
+
+We can then take a station abbreviations from the **get_telemetry_stations()** call, a parameter from the **get_reference_tbl()** call, and use this information as inputs into the get_telemetry_ts() function.
+
+The function call below with return a daily discharge timeseries for the ANDDITCO site between 2015-2022
+
+```python
+# identify telemetry stations in water district 6
+# stations  = cdsspy.get_telemetry_ts(
+#     abbrev         = stations.abbrev[1],
+#     parameter      = telemetry_params.parameter[7],
+#     start_date     = "2015-01-01",
+#     end_date       = "2022-01-01",
+#     timescale      = "day"
+#     )
 ```
