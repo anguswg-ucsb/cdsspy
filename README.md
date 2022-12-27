@@ -43,7 +43,7 @@ pip install cdsspy
 ```
 <br>
 
-# **Avaliable endpoints**
+## **Available endpoints**
 
 Below is a table of all of the CDSS API endpoints **`cdsspy`** has
 functions for.
@@ -65,11 +65,13 @@ functions for.
 | 11    | **get_telemetry_stations()**    | Returns telemetry stations and their most recent parameter reading | [telemetrystations/telemetrystation](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)                                                                                           |
 | 12    | **get_telemetry_ts()**          | Returns telemetry time series data (raw, hour, day)                | [telemetrystations/telemetrytimeseries](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)                                                                                        |
 
-# **Example: Telemetry site data**
-**Identify query inputs using reference tables**
+<br>
+
+## **Identify query inputs using reference tables**
 
 The **get_reference_tbl()** function will return tables that makes it easier to know what information should be supplied to the data retrieval functions in cdsspy. For more information on the exact reference tables click [here](https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml).
 
+<br>
 Let’s locate the parameters available at telemetry stations.
 
 ```python
@@ -78,11 +80,15 @@ telemetry_params = cdsspy.get_reference_tbl(
     table_name = "telemetryparams"
     )
 ```
+
 <br>
 
-**Locate stations**
+## **Locate stations**
 
-We can use the **get_\<endpoint>\_stations()** functions to identify the stations within a given spatial extent (point/polygon), water district, division, or county. Station data can also be retrieved by providing a specific station abbreviation, GNIS ID, USGS ID, or WDID.
+We can use the **get_\<endpoint>\_stations()** set of functions to identify different types of stations within a given water district, division, or county. Station data can also be retrieved by providing a specific station abbreviation, GNIS ID, USGS ID, or WDID. 
+
+<br>
+Here we locate all the telemetry stations within water district 6:
 
 ```python
 # identify telemetry stations in water district 6
@@ -91,13 +97,17 @@ stations  = cdsspy.get_telemetry_stations(
     )
 ```
 
-**Retrieve Telemetry station timeseries data**
+<br>
 
-The **get_\<endpoint>\_ts()** functions retrieve timeseries data from the CDSS API.
+## **Retrieve Telemetry station timeseries data**
+
+The **get_\<endpoint>\_ts()** set of functions retrieve timeseries data from the CDSS API.
 
 We can then take a station abbreviations from the **get_telemetry_stations()** call, a parameter from the **get_reference_tbl()** call, and use this information as inputs into the **get_telemetry_ts()** function.
 
-The function call below with return a daily discharge timeseries for the ANDDITCO site between 2015-2022
+<br>
+
+The function call below with return a daily discharge timeseries for the ANDDITCO site between 2015-2022:
 
 ```python
 # identify telemetry stations in water district 6
@@ -108,15 +118,13 @@ discharge_ts   = cdsspy.get_telemetry_ts(
     end_date       = "2022-01-01",
     timescale      = "day"
     )
-discharge_ts
 ```
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/daily_dischargge_plot.png)
 
+<br>
 
-# **Example: Groundwater well data**
-
-**Retrieve groundwater well data**
+## **Retrieve groundwater data**
 The **get_gw_()** set of functions lets users make get requests to the various CDSS API groundwater endpoints shown in the table below:
 
 | **-** | **Function**                    | **Endpoint**                                                                                                                                     |
@@ -137,6 +145,4 @@ well_measure = cdsspy.get_gw_wl_wellmeasures(
     start_date = "1990-01-01",
     end_date   = "2022-01-01"
     )
-
-
 ```
