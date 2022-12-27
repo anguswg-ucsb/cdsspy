@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.0.2"
+__version__ = "1.0.3"
 
 import pandas as pd
 import requests
@@ -527,8 +527,8 @@ def get_climate_ts_month(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-calYear={start_year or ""}' 
-            f'&max-calYear={end_year or ""}'
+            f'&min-calYear={start_date or ""}' 
+            f'&max-calYear={end_date or ""}'
             f'&stationNum={station_number or ""}' 
             f'&siteId={site_id or ""}' 
             f'&measType={param or ""}' 
@@ -744,8 +744,8 @@ def get_gw_wl_wellmeasures(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-measurementDate={start or ""}' 
-            f'&min-measurementDate={end or ""}'
+            f'&min-measurementDate={start_date or ""}' 
+            f'&min-measurementDate={end_date or ""}'
             f'&wellId={wellid or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
