@@ -527,7 +527,7 @@ def get_climate_ts_month(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-calYear={start_date or ""}' 
+            f'&min-calYear={start_date or ""}'
             f'&max-calYear={end_date or ""}'
             f'&stationNum={station_number or ""}' 
             f'&siteId={site_id or ""}' 
