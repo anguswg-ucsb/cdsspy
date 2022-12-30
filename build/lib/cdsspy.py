@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.0.5"
+__version__ = "1.0.6"
 
 import pandas as pd
 import requests
@@ -3284,13 +3284,13 @@ def extract_coords(
             "List/Tuple of an XY coordinate pair\n" +
             "2 column XY Pandas DataFrame\n" +
             "Geopandas GeoDataFrame containing a Polygon, LineString, LinearRing, or Point\n" +
-            "Geopandas GeoSeries containing a Point\n"
-            )
-            )
+            "Geopandas GeoSeries containing a Point\n"))
 
         # check if aoi is a list or tuple
         if(isinstance(aoi, (list, tuple))):
-            print("List/Tuple")
+
+            # print("List/Tuple")
+
             if(len(aoi) >= 2):
                 # print("Type: ", type(aoi), "of length ", len(aoi))
                 coord_lst = [aoi[0], aoi[1]]
@@ -3298,27 +3298,27 @@ def extract_coords(
                 # return list of coordinates
                 return coord_lst
 
-            else: 
+            else:
 
                 # return list of coordinates
                 raise Exception(("Invalid 'aoi' argument, 'aoi' must be one of the following:\n" + 
                 "List/Tuple of an XY coordinate pair\n" +
                 "2 column XY Pandas DataFrame\n" +
                 "Geopandas GeoDataFrame containing a Polygon, LineString, LinearRing, or Point\n" +
-                "Geopandas GeoSeries containing a Point\n"
-                )
-                )
+                "Geopandas GeoSeries containing a Point\n"))
 
         # check if aoi is a geopandas geoseries or geodataframe 
         if(isinstance(aoi, (geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame))):
-            print("GeoDataFrame or GeoSeries")
+            # print("GeoDataFrame or GeoSeries")
 
             # convert CRS to 5070
             aoi = aoi.to_crs(5070)
 
             # if aoi geometry type is polygon/line/linearRing
             if(aoi.geom_type[0] in ["Polygon", 'LineString', 'LinearRing']):
-                print("Type: ", aoi.geom_type[0])
+
+                # print("Type: ", aoi.geom_type[0])
+
                 # get centroid of polygon, and convert to 4326 and add lng/lat as column
                 aoi["lng"] = aoi.centroid.to_crs(4326).map(lambda p: p.x)
                 aoi["lat"] = aoi.centroid.to_crs(4326).map(lambda p: p.y)
@@ -3341,7 +3341,7 @@ def extract_coords(
                 # checking if point is geopandas Geoseries
                 if(isinstance(aoi, (geopandas.geoseries.GeoSeries))):
 
-                    print("Type: GeoSeries Point")
+                    # print("Type: GeoSeries Point")
 
                     # convert to 4326, and extract lat/lng from Pandas GeoSeries
                     lng = float(aoi.to_crs(4326).apply(lambda p: p.x))
@@ -3355,7 +3355,7 @@ def extract_coords(
 
                 # checking if point is geopandas GeoDataFrame
                 if(isinstance(aoi, (geopandas.geodataframe.GeoDataFrame))):
-                    print("Type: GeoDataFrame Point")
+                    # print("Type: GeoDataFrame Point")
 
                     # convert to 4326, and extract lat/lng from Pandas GeoDataFrame
                     lng = float(aoi.to_crs(4326).apply(lambda p: p.x)[0])
@@ -3369,9 +3369,9 @@ def extract_coords(
                     
         # check if aoi is a Pandas dataframe
         if(isinstance(aoi, (pd.core.frame.DataFrame))):
-            print("Pandas dataframe")
-            print("# cols: ", len(aoi.columns))
-            print("# rows: ", len(aoi.index))
+            # print("Pandas dataframe")
+            # print("# cols: ", len(aoi.columns))
+            # print("# rows: ", len(aoi.index))
 
             # extract first and second columns
             lng = float(aoi.iloc[:, 0])
@@ -3382,3 +3382,102 @@ def extract_coords(
 
             # return list of coordinates
             return coord_lst
+
+def check_radius(
+    aoi    = None,
+    radius = None
+    ):
+
+    """Internal function for radius argument value is within the valid value range for location search queries. 
+
+    Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
+
+    Returns:
+        int: radius value between 1-150 miles
+    """
+    # convert str radius value to int
+    if(isinstance(radius, (str))):
+        radius = int(radius)
+
+    # if spatial data is provided, check type and try to extract XY coordinates
+    if aoi is not None:
+        # print("AOI arg is NOT None")
+
+        # if radius is not NULL, and is larger than 150, set to max of 150. if NULL radius is provided with spatial data, default to 150 miles
+        if radius is not None:
+            # print("radius arg is NOT None")
+            
+            # if radius value is over max, set to 150
+            if(radius > 150):
+
+                # print("radius arg > 150, so set to 150")
+                radius = 150
+
+            # if radius value is under min, set to 1
+            if(radius <= 0):
+                # print("radius arg <= 0, so set to 1")
+                radius = 1
+
+        # if no radius given, set to 20 miles
+        else:
+            # print("radius arg is None, default to 20 miles")
+            radius = 20
+    else:
+        # print("AOI arg is None")
+        radius = None
+    
+    # Return radius value
+    return radius
+
+def check_aoi(
+    aoi    = None, 
+    radius = None
+    ):
+
+    """Internal function for checking AOI and radius arguments are valid for use in location search queries.
+    Function takes in a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries of spatial objects,
+    along with a radius value between 1-150 miles.
+    The extracts the necessary coordinates from the given aoi parameter and also makes sure the radius value is within the valid value range. 
+    The function then returns a list of length 2, indicating the XY coordinate pair. 
+    If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
+
+    Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
+
+    Returns:
+        list: list containing the latitude, longitude, and radius values to use for location search queries.
+    """
+
+    # convert str radius value to int
+    if(isinstance(radius, (str))):
+        radius = int(radius)
+
+    # extract lat/long coords for query
+    if(aoi is not None):
+        # extract coordinates from matrix/dataframe/sf object
+        coord_df = extract_coords(aoi = aoi)
+        
+        # check radius is valid and fix if necessary
+        radius = check_radius(
+            aoi    = aoi,
+            radius = radius
+            )
+
+        # lat/long coords
+        lng = coord_df[0]
+        lat = coord_df[1]
+    
+    else:
+        # if None aoi given, set coords and radius to None
+        lng    = None
+        lat    = None
+        radius = None
+    
+    # create list to return container longitude, latitude, and radius
+    aoi_lst = [lng, lat, radius]
+    
+    # return lng, lat, radius list
+    return aoi_lst  
