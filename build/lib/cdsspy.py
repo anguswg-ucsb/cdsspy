@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.0.6"
+__version__ = "1.0.7"
 
 import pandas as pd
 import requests
@@ -30,10 +30,9 @@ def get_admin_calls(
     Returns:
         pandas dataframe object: dataframe of active/historical administrative calls data
     """
-
-    # if no division, location_wdid, or call number are given, return error
-    if division is None and location_wdid is None and call_number is None:
-        return print("Invalid 'division', 'location_wdid', or 'call_number' parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [division, location_wdid, call_number]):
+        raise TypeError("Invalid 'division', 'location_wdid', or 'call_number' parameters")
     
     # collapse location_wdid list, tuple, vector of site_id into query formatted string
     location_wdid = collapse_vector(
@@ -132,6 +131,8 @@ def get_admin_calls(
     return data_df
 
 def get_climate_stations(
+    aoi                 = None,
+    radius              = None,
     county              = None,
     division            = None,
     station_name        = None,
@@ -140,8 +141,10 @@ def get_climate_stations(
     api_key             = None
     ):
     """Return Climate Station information
-
+    Make a request to the climatedata/climatestations/ endpoint to locate climate stations by AOI, county, division, station name, Site ID or water_district.
     Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): County to query for climate stations. Defaults to None.
         division (int, str, optional):  Water division to query for climate stations. Defaults to None.
         station_name (str, optional): string, climate station name. Defaults to None.
@@ -153,6 +156,22 @@ def get_climate_stations(
     Returns:
         pandas dataframe object: dataframe of climate station data
     """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [aoi, county, division, station_name, site_id, water_district]):
+        raise TypeError("Invalid 'aoi', 'county', 'division', 'station_name', 'site_id', or 'water_district' parameters")
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
+
     # collapse site_id list, tuple, vector of site_id into query formatted string
     site_id = collapse_vector(
         vect = site_id, 
@@ -187,6 +206,10 @@ def get_climate_stations(
             f'&stationName={station_name or ""}' 
             f'&siteId={site_id or ""}'
             f'&waterDistrict={water_district or ""}' 
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
 
@@ -245,10 +268,13 @@ def get_climate_frostdates(
     Returns:
         pandas dataframe object: dataframe of climate station frost dates data
     """
+    # If all inputs are None, then return error message
+    if all(i is None for i in [station_number]):
+        raise TypeError("Invalid 'station_number' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
-
+    
     # parse start_date into query string format
     start_year = parse_date(
         date   = start_date,
@@ -355,11 +381,11 @@ def get_climate_ts_day(
 
     # if parameter is not in list of valid parameters
     if param not in param_lst:
-        return print("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
+        raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
 
-    # if no site_id and no station_number are given, return error
-    if site_id is None and station_number is None:
-        return print("Invalid 'site_id' or 'station_number' parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [site_id, station_number]):
+        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
@@ -479,11 +505,11 @@ def get_climate_ts_month(
 
     # if parameter is not in list of valid parameters
     if param not in param_lst:
-        return print("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
+        raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
 
-    # if no site_id and no station_number are given, return error
-    if site_id is None and station_number is None:
-        return print("Invalid 'site_id' or 'station_number' parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [site_id, station_number]):
+        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
@@ -600,6 +626,9 @@ def get_gw_wl_wells(
     Returns:
         pandas dataframe object: dataframe of groundwater water level wells
     """
+    # If all inputs are None, then return error message
+    if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
+        raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wells/?"
@@ -704,9 +733,9 @@ def get_gw_wl_wellmeasures(
         pandas dataframe object: dataframe of groundwater well measurements
     """
 
-    # if no well ID is given, return error
-    if wellid is None:
-        return print("Invalid 'wellid' parameter")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [wellid]):
+        raise TypeError("Invalid 'wellid' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wellmeasurements/?"
@@ -813,6 +842,10 @@ def get_gw_gplogs_wells(
         pandas dataframe object: dataframe of groundwater geophysicallog wells
     """
 
+    # If all inputs are None, then return error message
+    if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
+        raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
+
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/wells/?"
 
@@ -911,6 +944,9 @@ def get_gw_gplogs_geologpicks(
     Returns:
         pandas dataframe object: dataframe of groundwater geophysical log picks
     """
+    # If all inputs are None, then return error message
+    if all(i is None for i in [wellid]):
+        raise TypeError("Invalid 'wellid' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/geoplogpicks/?"
@@ -999,7 +1035,7 @@ def get_reference_tbl(
 
     # if parameter is not in list of valid parameters
     if table_name not in tbl_lst:
-        return print("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
+        raise ValueError("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
 
     # retrieve county reference table
     if table_name == "county":
@@ -1790,9 +1826,10 @@ def get_structure_divrecday(
     Returns:
         pandas dataframe object: dataframe of daily structure diversion/releases records 
     """
-    # if no abbreviation is given, return error
+
+    # if no wdid is given, return error
     if wdid is None:
-        return print("Invalid 'wdid' parameter")
+        raise TypeError("Invalid 'wdid' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
@@ -1899,10 +1936,10 @@ def get_structure_divrecmonth(
     Returns:
         pandas dataframe object: dataframe of monthly structure diversion/releases records 
     """
-    # if no abbreviation is given, return error
+    # if no wdid is given, return error
     if wdid is None:
-        return print("Invalid 'wdid' parameter")
-
+        raise TypeError("Invalid 'wdid' parameter")
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
 
@@ -2009,10 +2046,10 @@ def get_structure_divrecyear(
         pandas dataframe object: dataframe of annual structure diversion/releases records 
     """
 
-    # if no abbreviation is given, return error
+    # if no wdid is given, return error
     if wdid is None:
-        return print("Invalid 'wdid' parameter")
-
+        raise TypeError("Invalid 'wdid' parameter")
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
 
@@ -2119,7 +2156,7 @@ def get_structure_stage(
 
     # if no abbreviation is given, return error
     if wdid is None:
-        return print("Invalid 'wdid' parameter")
+        raise TypeError("Invalid 'wdid' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/stagevolume/?"
@@ -2207,6 +2244,8 @@ def get_structure_stage(
     return data_df
 
 def get_structures(
+    aoi            = None,
+    radius         = None,
     county         = None,
     division       = None,
     gnis_id        = None,
@@ -2215,8 +2254,10 @@ def get_structures(
     api_key        = None
 ):
     """Return list of administrative structures
-    Make a request to the api/v2/structures endpoint to locate administrative structures by division, county, water_district, GNIS, or WDID.
+    Make a request to the api/v2/structures endpoint to locate administrative structures via a spatial search or by division, county, water_district, GNIS, or WDID.
     Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): Indicating the county to query. Defaults to None.
         division (int, str, optional): Indicating the water division to query. Defaults to None.
         gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
@@ -2227,6 +2268,11 @@ def get_structures(
     Returns:
         pandas dataframe object: dataframe of administrative structures
     """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [aoi, county, division, gnis_id, water_district, wdid]):
+        raise TypeError("Invalid 'aoi', 'county', 'division', 'gnis_id', 'water_district', or 'wdid' parameters")
+
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
 
@@ -2237,6 +2283,17 @@ def get_structures(
     # convert numeric water_district to string
     if type(water_district) == int or type(water_district) == float:
         water_district = str(water_district)
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
 
     # collapse WDID list, tuple, vector of site_id into query formatted string
     wdid = collapse_vector(
@@ -2267,6 +2324,10 @@ def get_structures(
             f'&gnisId={gnis_id or ""}'
             f'&waterDistrict={water_district or ""}'
             f'&wdid={wdid or ""}'
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
 
@@ -2330,9 +2391,9 @@ def get_sw_ts_day(
         pandas dataframe object: daily surface water timeseries data
     """
 
-    # if no site_id and no station_number are given, return error
-    if abbrev is None and station_number is None and usgs_id is None:
-        return print("Invalid 'abbrev', 'station_number', or 'usgs_id', parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [abbrev, station_number, usgs_id]):
+        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/?"
@@ -2454,9 +2515,9 @@ def get_sw_ts_month(
         pandas dataframe object: monthly surface water timeseries data
     """
 
-    # if no site_id and no station_number are given, return error
-    if abbrev is None and station_number is None and usgs_id is None:
-        return print("Invalid 'abbrev', 'station_number', or 'usgs_id', parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [abbrev, station_number, usgs_id]):
+        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsmonth/?"
@@ -2575,9 +2636,9 @@ def get_sw_ts_wyear(
         pandas dataframe object: annual surface water timeseries data
     """
 
-    # if no site_id and no station_number are given, return error
-    if abbrev is None and station_number is None and usgs_id is None:
-        return print("Invalid 'abbrev', 'station_number', or 'usgs_id', parameters")
+    # If all inputs are None, then return error message
+    if all(i is None for i in [abbrev, station_number, usgs_id]):
+        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertswateryear/?"
@@ -2675,6 +2736,8 @@ def get_sw_ts_wyear(
     return data_df
 
 def get_telemetry_stations(
+    aoi            = None,
+    radius         = None,
     abbrev         = None,
     county         = None,
     division       = None,
@@ -2687,6 +2750,8 @@ def get_telemetry_stations(
     """Return Telemetry Station info
 
     Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         abbrev (str, tuple, list, optional): Abbreviation name (or list of abbreviations) of the telemetry station. Defaults to None.
         county (str, optional): County to query for telemetry stations. Defaults to None.
         division (int, str, optional):  Water division to query for telemetry stations. Defaults to None.
@@ -2701,14 +2766,29 @@ def get_telemetry_stations(
         pandas dataframe object: dataframe of telemetry station data
     """
 
+    # If all inputs are None, then return error message
+    if all(i is None for i in [aoi, abbrev, county, division, gnis_id, usgs_id, water_district, wdid]):
+        raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'gnis_id', 'usgs_id', 'water_district', or 'wdid' parameters")
+
+    # base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
+
     # collapse site_id list, tuple, vector of site_id into query formatted string
     abbrev = collapse_vector(
         vect = abbrev, 
         sep  = "%2C+"
         )
-
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
 
     # maximum records per page
     page_size = 50000
@@ -2738,6 +2818,10 @@ def get_telemetry_stations(
             f'&usgsStationId={usgs_id or ""}'
             f'&waterDistrict={water_district or ""}'
             f'&wdid={wdid or ""}'
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
         
@@ -2805,7 +2889,7 @@ def get_telemetry_ts(
 
     # if no abbreviation is given, return error
     if abbrev is None:
-        return print("Invalid 'abbrev' parameter")
+        raise TypeError("Invalid 'abbrev' parameter")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
@@ -2911,6 +2995,8 @@ def get_telemetry_ts(
     return data_df
 
 def get_water_rights_netamount(
+    aoi                 = None,
+    radius              = None, 
     county              = None,
     division            = None,
     water_district      = None,
@@ -2920,6 +3006,8 @@ def get_water_rights_netamount(
     """Return water rights net amounts data
 
     Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): County to query for water rights. Defaults to None.
         division (int, str, optional):  Water division to query for water rights. Defaults to None.
         water_district (str, optional): Water district to query for water rights. Defaults to None.
@@ -2931,11 +3019,22 @@ def get_water_rights_netamount(
     """
 
     # If all inputs are None, then return error message
-    if all(i is None for i in [county, division, water_district, wdid]):
-        return print("Invalid 'county', 'division', 'water_district', or 'wdid' parameters")
+    if all(i is None for i in [aoi, county, division, water_district, wdid]):
+        raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
 
     # maximum records per page
     page_size = 50000
@@ -2949,7 +3048,7 @@ def get_water_rights_netamount(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving groundwater geophysical log picks data")
+    print("Retrieving water rights net amounts data")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2961,6 +3060,121 @@ def get_water_rights_netamount(
             f'&division={division or ""}'
             f'&waterDistrict={water_district or ""}'
             f'&wdid={wdid or ""}'
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("\n" + "HTTP Error:\n" + errh, "\n")
+            print("Client response:\n" + errh.response.text, "\n")
+        except requests.exceptions.ConnectionError as errc:
+            print("\n" + "Connection Error:\n" + errc, "\n")
+            print("Client response:\n" + errc.response.text, "\n")
+        except requests.exceptions.Timeout as errt:
+            print("\n" + "Timeout Error:\n" + errt, "\n")
+            print("Client response:\n" + errt.response.text, "\n")
+        except requests.exceptions.RequestException as err:
+            print("\n" + "Exception raised:\n" + err, "\n")
+            print("Client response:\n" + err.response.text,  "\n")
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
+
+def get_water_rights_trans(
+    aoi                 = None,
+    radius              = None, 
+    county              = None,
+    division            = None,
+    water_district      = None,
+    wdid                = None,
+    api_key             = None
+    ):
+    """Return water rights transactions data
+
+    Args:
+        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+        county (str, optional): County to query for water rights. Defaults to None.
+        division (int, str, optional):  Water division to query for water rights transactions. Defaults to None.
+        water_district (str, optional): Water district to query for water rights transactions. Defaults to None.
+        wdid (str, optional): WDID code of water right transaction. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of water rights transactions data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [aoi, county, division, water_district, wdid]):
+        raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/transaction/?"
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving water rights transactions data")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&county={county or ""}'
+            f'&division={division or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&wdid={wdid or ""}'
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
 
@@ -3013,6 +3227,7 @@ def get_call_analysis_wdid(
 
     Args:
         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
+        admin_no (str, int optional): Water Right Administration Number. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
@@ -3023,7 +3238,11 @@ def get_call_analysis_wdid(
 
     # If all inputs are None, then return error message
     if all(i is None for i in [wdid, admin_no]):
-        return print("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+        raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+
+    # convert int admin_no to str
+    if(isinstance(admin_no, (int))):
+        admin_no = str(admin_no)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
@@ -3127,7 +3346,7 @@ def get_source_route_framework(
 
     # If all inputs are None, then return error message
     if all(i is None for i in [division, gnis_name, water_district]):
-        return print("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
+        raise TypeError("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteframework/?"
