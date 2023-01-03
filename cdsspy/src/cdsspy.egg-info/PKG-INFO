@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.0.7
+Version: 1.0.8
 Summary: Python package for accessing CDSS API web services
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
