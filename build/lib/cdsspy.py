@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.0.7"
+__version__ = "1.0.8"
 
 import pandas as pd
 import requests
@@ -3508,10 +3508,9 @@ def extract_coords(
         # check if aoi is a list or tuple
         if(isinstance(aoi, (list, tuple))):
 
-            # print("List/Tuple")
-
             if(len(aoi) >= 2):
-                # print("Type: ", type(aoi), "of length ", len(aoi))
+
+                # make coordinate list of XY values
                 coord_lst = [aoi[0], aoi[1]]
 
                 # return list of coordinates
@@ -3528,15 +3527,12 @@ def extract_coords(
 
         # check if aoi is a geopandas geoseries or geodataframe 
         if(isinstance(aoi, (geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame))):
-            # print("GeoDataFrame or GeoSeries")
 
             # convert CRS to 5070
             aoi = aoi.to_crs(5070)
 
             # if aoi geometry type is polygon/line/linearRing
-            if(aoi.geom_type[0] in ["Polygon", 'LineString', 'LinearRing']):
-
-                # print("Type: ", aoi.geom_type[0])
+            if(["Polygon", 'LineString', 'LinearRing'] in aoi.geom_type.values):
 
                 # get centroid of polygon, and convert to 4326 and add lng/lat as column
                 aoi["lng"] = aoi.centroid.to_crs(4326).map(lambda p: p.x)
@@ -3556,11 +3552,9 @@ def extract_coords(
                 return coord_lst
 
             # if aoi geometry type is point
-            if(aoi.geom_type[0] in ["Point"]):
+            if("Point" in aoi.geom_type.values):
                 # checking if point is geopandas Geoseries
                 if(isinstance(aoi, (geopandas.geoseries.GeoSeries))):
-
-                    # print("Type: GeoSeries Point")
 
                     # convert to 4326, and extract lat/lng from Pandas GeoSeries
                     lng = float(aoi.to_crs(4326).apply(lambda p: p.x))
@@ -3574,7 +3568,6 @@ def extract_coords(
 
                 # checking if point is geopandas GeoDataFrame
                 if(isinstance(aoi, (geopandas.geodataframe.GeoDataFrame))):
-                    # print("Type: GeoDataFrame Point")
 
                     # convert to 4326, and extract lat/lng from Pandas GeoDataFrame
                     lng = float(aoi.to_crs(4326).apply(lambda p: p.x)[0])
@@ -3588,9 +3581,6 @@ def extract_coords(
                     
         # check if aoi is a Pandas dataframe
         if(isinstance(aoi, (pd.core.frame.DataFrame))):
-            # print("Pandas dataframe")
-            # print("# cols: ", len(aoi.columns))
-            # print("# rows: ", len(aoi.index))
 
             # extract first and second columns
             lng = float(aoi.iloc[:, 0])
