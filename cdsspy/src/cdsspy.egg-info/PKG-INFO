@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.0.8
+Version: 1.0.9
 Summary: Python package for accessing CDSS API web services
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
@@ -60,22 +60,28 @@ pip install cdsspy
 Below is a table of all of the CDSS API endpoints **`cdsspy`** has
 functions for.
 
-| **-** | **Function**                    | **Description**                                                    | **Endpoint**                                                                                                                                                                                                                         |
-|-------|---------------------------------|--------------------------------------------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
-| 1     | **get_admin_calls()**           | Returns list of active/historic administrative calls               | [administrativecalls/active](https://dwr.state.co.us/rest/get/help#Datasets&#AdministrativeCallsController&https://dnrweblink.state.co.us/dwr/ElectronicFile.aspx?docid=3600964&dbid=0&#gettingstarted&#jsonxml)                     |
-| 2     | **get_structures()**            | Returns list of administrative structures                          | [structures](https://dwr.state.co.us/rest/get/help#Datasets&#StructuresController&#gettingstarted&#jsonxml)                                                                                                                          |
-| 3     | **get_structures_divrec()**     | Returns list of diversion/release/stage records based on WDID      | [structures/divrec/](https://dwr.state.co.us/rest/get/help#Datasets&#DiversionRecordsController&https://dnrweblink.state.co.us/dwr/ElectronicFile.aspx?docid=3600965&dbid=0&#gettingstarted&#jsonxml)                                |
-| 4     | **get_climate_stations()**      | Returns Climate Stations                                           | [climatedata/climatestations](https://dwr.state.co.us/rest/get/help#Datasets&#ClimateStationsController&https://www.ncdc.noaa.gov/cdo-web/webservices&https://www.northernwater.org/our-data/weather-data&#gettingstarted&#jsonxml)  |
-| 5     | **get_climate_ts()**            | Returns Climate Station Time Series (day, month, year)             | [climatedata/climatestationts](https://dwr.state.co.us/rest/get/help#Datasets&#ClimateStationsController&https://www.ncdc.noaa.gov/cdo-web/webservices&https://www.northernwater.org/our-data/weather-data&#gettingstarted&#jsonxml) |
-| 6     | **get_gw_gplogs_wells()**       | Returns Groundwater GeophysicalLogsWell from filters               | [groundwater/geophysicallogs/](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterGeophysicalLogsController&#gettingstarted&#jsonxml)                                                                                        |
-| 7     | **get_gw_gplogs_geologpicks()** | Returns Groundwater Geophysical Log picks by well ID               | [groundwater/geophysicallogs/](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterGeophysicalLogsController&#gettingstarted&#jsonxml)                                                                                        |
-| 7     | **get_gw_wl_wells()**           | Returns WaterLevelsWell from filters                               | [groundwater/waterlevels/wells](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterLevelsController&#gettingstarted&#jsonxml)                                                                                                |
-| 6     | **get_gw_wl_wellmeasures()**    | Returns Groundwater Measurements                                   | [groundwater/waterlevels/wellmeasurements](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterLevelsController&#gettingstarted&#jsonxml)                                                                                     |
-| 8     | **get_reference_tbl()**         | Returns reference tables list                                      | [referencetables/](https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml)                                                                                                               |
-| 9     | **get_sw_stations()**           | Returns Surface Water Station info                                 | [surfacewater/surfacewaterstations](https://dwr.state.co.us/rest/get/help#Datasets&#SurfaceWaterController&#gettingstarted&#jsonxml)                                                                                                 |
-| 10    | **get_sw_ts()**                 | Returns Surface Water Time Series                                  | [surfacewater/surfacewaterts](https://dwr.state.co.us/rest/get/help#Datasets&#SurfaceWaterController&#gettingstarted&#jsonxml)                                                                                                       |
-| 11    | **get_telemetry_stations()**    | Returns telemetry stations and their most recent parameter reading | [telemetrystations/telemetrystation](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)                                                                                           |
-| 12    | **get_telemetry_ts()**          | Returns telemetry time series data (raw, hour, day)                | [telemetrystations/telemetrytimeseries](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)                                                                                        |
+|**-** |**Function**                    | **Description**                                                    | **Endpoint**                                 |
+|------|--------------------------------| -------------------------------------------------------------------|----------------------------------------------|
+|1     | **get_admin_calls()**          | Returns list of active/historic administrative calls               | [administrativecalls/active](https://dwr.state.co.us/rest/get/help#Datasets&#AdministrativeCallsController&https://dnrweblink.state.co.us/dwr/ElectronicFile.aspx?docid=3600964&dbid=0&#gettingstarted&#jsonxml)            |
+|2     | **get_structures()**           | Returns list of administrative structures                          | [structures](https://dwr.state.co.us/rest/get/help#Datasets&#StructuresController&#gettingstarted&#jsonxml)                            |
+|3     | **get_structures_divrec()**    | Returns list of diversion/release/stage records based on WDID      | [structures/divrec/](https://dwr.state.co.us/rest/get/help#Datasets&#DiversionRecordsController&https://dnrweblink.state.co.us/dwr/ElectronicFile.aspx?docid=3600965&dbid=0&#gettingstarted&#jsonxml)              |
+|4     | **get_climate_stations()**     | Returns Climate Stations                                           | [climatedata/climatestations](https://dwr.state.co.us/rest/get/help#Datasets&#ClimateStationsController&https://www.ncdc.noaa.gov/cdo-web/webservices&https://www.northernwater.org/our-data/weather-data&#gettingstarted&#jsonxml)           |
+|5     | **get_climate_ts()**           | Returns Climate Station Time Series (day, month, year)             | [climatedata/climatestationts](https://dwr.state.co.us/rest/get/help#Datasets&#ClimateStationsController&https://www.ncdc.noaa.gov/cdo-web/webservices&https://www.northernwater.org/our-data/weather-data&#gettingstarted&#jsonxml)       |
+|6     | **get_climate_frostdates()**           | Returns Climate Station Frost Dates             | [climatedata/climatestationfrostdates](https://dwr.state.co.us/rest/get/help#Datasets&#ClimateStationsController&https://www.ncdc.noaa.gov/cdo-web/webservices&https://www.northernwater.org/our-data/weather-data&#gettingstarted&#jsonxml)       |
+|7     | **get_gw_gplogs_wells()**          | Returns Groundwater GeophysicalLogsWell from filters           | [groundwater/geophysicallogs/](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterGeophysicalLogsController&#gettingstarted&#jsonxml)                          |
+|8     | **get_gw_gplogs_geologpicks()**          | Returns Groundwater Geophysical Log picks by well ID           | [groundwater/geophysicallogs/](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterGeophysicalLogsController&#gettingstarted&#jsonxml)                          |
+|9     | **get_gw_wl_wells()**          | Returns WaterLevelsWell from filters           | [groundwater/waterlevels/wells](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterLevelsController&#gettingstarted&#jsonxml)                          |
+|10     | **get_gw_wl_wellmeasures()**          | Returns  Groundwater Measurements | [groundwater/waterlevels/wellmeasurements](https://dwr.state.co.us/rest/get/help#Datasets&#GroundwaterLevelsController&#gettingstarted&#jsonxml)                          |
+|11     | **get_reference_tbl()**        | Returns reference tables list                                      | [referencetables/](https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml)                      |
+|12     | **get_sw_stations()**          | Returns Surface Water Station info                                 | [surfacewater/surfacewaterstations](https://dwr.state.co.us/rest/get/help#Datasets&#SurfaceWaterController&#gettingstarted&#jsonxml)     |
+|13    | **get_sw_ts()**                | Returns Surface Water Time Series                                  | [surfacewater/surfacewaterts](https://dwr.state.co.us/rest/get/help#Datasets&#SurfaceWaterController&#gettingstarted&#jsonxml)        |
+|14    | **get_telemetry_stations()**   | Returns telemetry stations and their most recent parameter reading | [telemetrystations/telemetrystation](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)    |
+|15    | **get_telemetry_ts()**         | Returns telemetry time series data (raw, hour, day) | [telemetrystations/telemetrytimeseries](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)|
+|16    | **get_water_rights_netamount()**   | Returns current status of a water right based on all of its court decreed actions | [waterrights/netamount](https://dwr.state.co.us/rest/get/help#Datasets&#WaterRightsController&#gettingstarted&#jsonxml)    |
+|17    | **get_water_rights_trans()**         | Returns court decreed actions that affect amount and use(s) that can be used by each water right | [waterrights/transaction](https://dwr.state.co.us/rest/get/help#Datasets&#WaterRightsController&#gettingstarted&#jsonxml)|
+|18    | **get_call_analysis_wdid()**   | 	Performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority | [analysisservices/callanalysisbywdid](https://dwr.state.co.us/rest/get/help#Datasets&#AnalysisServicesController&#gettingstarted&#jsonxml)    |
+|19    | **get_source_route_framework()**         | Returns the DWR source route framework reference table for the criteria specified | [analysisservices/watersourcerouteframework](https://dwr.state.co.us/rest/get/help#Datasets&#AnalysisServicesController&#gettingstarted&#jsonxml)|
+                                                                                
 
 <br>
 
@@ -93,39 +99,81 @@ telemetry_params = cdsspy.get_reference_tbl(
     )
 ```
 
+|    | Parameter   |
+|---:|:------------|
+|  0 | AIRTEMP     |
+|  1 | BAR_P       |
+|  2 | BATTERY     |
+|  3 | COND        |
+|  4 | D1          |
+|  5 | D2          |
+|  6 | DISCHRG     |
+|  7 | DISCHRG1    |
+|  8 | DISCHRG2    |
+|  9 | DISCHRG3    |
+| 10 | DISCHRG4    |
+| 11 | ELEV        |
+
 <br>
 
 ## **Locate stations**
 
-We can use the **get_\<endpoint>\_stations()** set of functions to identify different types of stations within a given water district, division, or county. Station data can also be retrieved by providing a specific station abbreviation, GNIS ID, USGS ID, or WDID. 
+We can use the **get_\<endpoint>\_stations()** set of functions to identify different types of stations within a given spatial extent, water district, division, or county. Station data can also be retrieved by providing a specific station abbreviation, GNIS ID, USGS ID, or WDID. 
 
 <br>
-Here we locate all the telemetry stations within water district 6:
+
+**Locating telemetry stations by county:**
 
 ```python
-# identify telemetry stations in water district 6
+# identify telemetry stations in Boulder County
 stations  = cdsspy.get_telemetry_stations(
-    water_district = "6"
+    county = "Boulder"
     )
 ```
 
 <br>
 
+|    |   division |   waterDistrict | county   | stationName                                                    | waterSource         |   streamMile | abbrev   | stationType         | structureType   | parameter   |   longitude |   latitude |
+|---:|-----------:|----------------:|:---------|:---------------------------------------------------------------|:--------------------|-------------:|:---------|:--------------------|:----------------|:------------|------------:|-----------:|
+|  0 |          1 |               5 | BOULDER  | CLOUGH PRIVATE DITCH                                           | SAINT VRAIN CREEK   |       nan    | 0500536A | Diversion Structure | Ditch           | DISCHRG     |    -105.217 |    40.1941 |
+|  1 |          1 |               6 | BOULDER  | ANDERSON DITCH                                                 | BOULDER CREEK       |        23.58 | ANDDITCO | Diversion Structure | Ditch           | DISCHRG     |    -105.301 |    40.0132 |
+|  2 |          1 |               6 | BOULDER  | ANDREWS FARWELL DITCH                                          | SOUTH BOULDER CREEK |         1.5  | ANFDITCO | Diversion Structure | Ditch           | DISCHRG     |    -105.169 |    40.0178 |
+|  3 |          1 |               6 | BOULDER  | BASELINE RESERVOIR OUTLET                                      | BOULDER CREEK       |        19.18 | BASOUTCO | Stream Gage         | Reservoir       | DISCHRG     |    -105.198 |    39.9986 |
+|  4 |          1 |               6 | BOULDER  | BOULDER CREEK SUPPLY CANAL TO BOULDER CREEK ABOVE ERIE TURNOUT | BOULDER CREEK       |        15.5  | BCSCBCCO | Diversion Structure | Other           | DISCHRG     |    -105.193 |    40.053  |
+|  5 |          1 |               5 | BOULDER  | BOULDER RESERVOIR INLET                                        | LEFT HAND CREEK     |         8.66 | BFCINFCO | Stream Gage         | Reservoir       | DISCHRG     |    -105.218 |    40.0863 |
+
+<br>
+
+**Locating telemetry stations within a spatial extent:**
+
+```python
+# identify telemetry stations within a 15 mile radius of the center point of Boulder County
+stations  = cdsspy.get_telemetry_stations(
+    aoi    = [-105.358164, 40.092608],
+    radius = 15
+    )
+```
+
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/telemetry_stations_boulder.png)
+
+<br>
+<br>
+
 ## **Retrieve Telemetry station timeseries data**
 
-The **get_\<endpoint>\_ts()** set of functions retrieve timeseries data from the CDSS API.
+The functions ending with **_ts()** map to the various timeseries data endpoints from the CDSS API.
 
 We can then take a station abbreviations from the **get_telemetry_stations()** call, a parameter from the **get_reference_tbl()** call, and use this information as inputs into the **get_telemetry_ts()** function.
 
 <br>
 
-The function call below with return a daily discharge timeseries for the ANDDITCO site between 2015-2022:
+**The function call below will return a daily discharge timeseries for the ANDDITCO site between 2015-2022:**
 
 ```python
 # identify telemetry stations in water district 6
 discharge_ts   = cdsspy.get_telemetry_ts(
     abbrev         = "ANDDITCO",
-    parameter      = telemetry_params.parameter[6],
+    parameter      = "DISCHRG",
     start_date     = "2015-01-01",
     end_date       = "2022-01-01",
     timescale      = "day"
@@ -137,7 +185,7 @@ discharge_ts   = cdsspy.get_telemetry_ts(
 <br>
 
 ## **Retrieve groundwater data**
-The **get_gw_()** set of functions lets users make get requests to the various CDSS API groundwater endpoints shown in the table below:
+The **get_gw_()** set of functions lets users make retrieve data from the various groundwater related API endpoints shown in the table below:
 
 | **-** | **Function**                    | **Endpoint**                                                                                                                                     |
 |-------|---------------------------------|--------------------------------------------------------------------------------------------------------------------------------------------------|
@@ -148,13 +196,14 @@ The **get_gw_()** set of functions lets users make get requests to the various C
 
 <br>
 
-Here we will retrieve groundwater well measurement data for Well ID 1274 between 1990-2022.
+Here we will retrieve groundwater well measurement data for Well ID 1274 between 2021-2022.
 
 ```python
 # Request wellmeasurements endpoint (api/v2/groundwater/waterlevels/wellmeasurements)
 well_measure = cdsspy.get_gw_wl_wellmeasures(
     wellid     = "1274",
-    start_date = "1990-01-01",
+    start_date = "2021-01-01",
     end_date   = "2022-01-01"
     )
 ```
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot.png)
