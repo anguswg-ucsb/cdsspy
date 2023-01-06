@@ -1,10 +1,12 @@
 # __init__.py
-__version__ = "1.0.9"
+__version__ = "1.1.0"
 
 import pandas as pd
 import requests
 import datetime
 import geopandas
+import shapely
+import pyproj
 
 def get_admin_calls(
     division            = None,
@@ -35,20 +37,20 @@ def get_admin_calls(
         raise TypeError("Invalid 'division', 'location_wdid', or 'call_number' parameters")
     
     # collapse location_wdid list, tuple, vector of site_id into query formatted string
-    location_wdid = collapse_vector(
+    location_wdid = _collapse_vector(
         vect = location_wdid, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -102,17 +104,18 @@ def get_admin_calls(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -162,7 +165,7 @@ def get_climate_stations(
         raise TypeError("Invalid 'aoi', 'county', 'division', 'station_name', 'site_id', or 'water_district' parameters")
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = check_aoi(
+    aoi_lst = _check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -173,7 +176,7 @@ def get_climate_stations(
     radius = aoi_lst[2]
 
     # collapse site_id list, tuple, vector of site_id into query formatted string
-    site_id = collapse_vector(
+    site_id = _collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
@@ -223,17 +226,18 @@ def get_climate_stations(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -249,6 +253,12 @@ def get_climate_stations(
         else:
             page_index += 1
     
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
+
     return data_df
 
 def get_climate_frostdates(
@@ -276,14 +286,14 @@ def get_climate_frostdates(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
     
     # parse start_date into query string format
-    start_year = parse_date(
+    start_year = _parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_year = parse_date(
+    end_year = _parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -325,17 +335,18 @@ def get_climate_frostdates(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -391,20 +402,20 @@ def get_climate_ts_day(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
 
     # collapse list, tuple, vector of site_id into query formatted string
-    site_id = collapse_vector(
+    site_id = _collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -448,17 +459,18 @@ def get_climate_ts_day(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -515,20 +527,20 @@ def get_climate_ts_month(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
 
     # collapse list, tuple, vector of site_id into query formatted string
-    site_id = collapse_vector(
+    site_id = _collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -572,17 +584,18 @@ def get_climate_ts_month(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -687,17 +700,18 @@ def get_gw_wl_wells(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -741,14 +755,14 @@ def get_gw_wl_wellmeasures(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wellmeasurements/?"
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -790,17 +804,18 @@ def get_gw_wl_wellmeasures(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -903,17 +918,18 @@ def get_gw_gplogs_wells(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -989,17 +1005,18 @@ def get_gw_gplogs_geologpicks(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1150,17 +1167,18 @@ def get_ref_county(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1232,17 +1250,18 @@ def get_ref_waterdistricts(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1311,17 +1330,18 @@ def get_ref_waterdivisions(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1389,17 +1409,18 @@ def get_ref_managementdistricts(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1467,17 +1488,18 @@ def get_ref_designatedbasins(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1545,17 +1567,17 @@ def get_ref_telemetry_params(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1623,17 +1645,18 @@ def get_ref_climate_params(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1701,17 +1724,18 @@ def get_ref_divrectypes(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1779,17 +1803,18 @@ def get_ref_stationflags(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -1835,20 +1860,20 @@ def get_structure_divrecday(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
 
     # collapse list, tuple, vector of wdid into query formatted string
-    wdid = collapse_vector(
+    wdid = _collapse_vector(
         vect = wdid, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -1888,17 +1913,18 @@ def get_structure_divrecday(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -1944,20 +1970,20 @@ def get_structure_divrecmonth(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
 
     # collapse list, tuple, vector of wdid into query formatted string
-    wdid = collapse_vector(
+    wdid = _collapse_vector(
         vect = wdid, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%Y"
@@ -1998,17 +2024,18 @@ def get_structure_divrecmonth(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2054,20 +2081,20 @@ def get_structure_divrecyear(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
 
     # collapse list, tuple, vector of wdid into query formatted string
-    wdid = collapse_vector(
+    wdid = _collapse_vector(
         vect = wdid, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -2108,17 +2135,18 @@ def get_structure_divrecyear(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2162,20 +2190,20 @@ def get_structure_stage(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/stagevolume/?"
 
     # collapse list, tuple, vector of wdid into query formatted string
-    wdid = collapse_vector(
+    wdid = _collapse_vector(
         vect = wdid, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -2215,17 +2243,18 @@ def get_structure_stage(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2285,7 +2314,7 @@ def get_structures(
         water_district = str(water_district)
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = check_aoi(
+    aoi_lst = _check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -2296,7 +2325,7 @@ def get_structures(
     radius = aoi_lst[2]
 
     # collapse WDID list, tuple, vector of site_id into query formatted string
-    wdid = collapse_vector(
+    wdid = _collapse_vector(
         vect = wdid, 
         sep  = "%2C+"
         )
@@ -2341,17 +2370,17 @@ def get_structures(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -2367,6 +2396,149 @@ def get_structures(
         else:
             page_index += 1
 
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
+    
+    return data_df
+
+def get_sw_stations(
+    aoi                 = None,
+    radius              = None,
+    abbrev              = None,
+    county              = None,
+    division            = None,
+    station_name        = None,
+    usgs_id             = None,
+    water_district      = None,
+    api_key             = None
+    ):
+    """Return Surface Water Station information
+        Make a request to the /surfacewater/surfacewaterstations endpoint to locate surface water stations by AOI, station abbreviation, county, division, station name, USGS ID or water_district.    Args:
+        
+    Args:
+        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+        abbrev (str, list, tuple, optional): surface water station abbreviation. Defaults to None.
+        county (str, optional): County to query for surface water stations. Defaults to None.
+        division (int, str, optional):  Water division to query for surface water stations. Defaults to None.
+        station_name (str, optional): surface water station name. Defaults to None.
+        usgs_id (str, tuple or list , optional): USGS IDs. Defaults to None.
+        water_district (int, str, optional): Water district to query for surface water stations. Defaults to None.
+        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+    
+    Returns:
+        pandas dataframe object: dataframe of surface water station data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [aoi, abbrev, county, division, station_name, usgs_id, water_district]):
+        raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'station_name', 'usgs_id', or 'water_district' parameters")
+
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = _check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
+
+    # collapse abbrev list, tuple, vector of abbrev into query formatted string
+    abbrev = _collapse_vector(
+        vect = abbrev, 
+        sep  = "%2C+"
+        )
+
+    # collapse usgs_id list, tuple, vector of usgs_id into query formatted string
+    usgs_id = _collapse_vector(
+        vect = usgs_id, 
+        sep  = "%2C+"
+        )
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/?"
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving surface water station data")
+
+    # Loop through pages until last page of data is found, binding each responce dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&abbrev={abbrev or ""}' 
+            f'&county={county or ""}' 
+            f'&division={division or ""}'
+            f'&stationName={station_name or ""}' 
+            f'&usgsSiteId={usgs_id or ""}'
+            f'&waterDistrict={water_district or ""}' 
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call
+        try:
+            cdss_req = requests.get(url, timeout = 4)
+            cdss_req.raise_for_status()
+        except requests.exceptions.HTTPError as errh:
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
+        except requests.exceptions.ConnectionError as errc:
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
+        except requests.exceptions.Timeout as errt:
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
+        except requests.exceptions.RequestException as err:
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if (len(cdss_df.index) < page_size):
+            more_pages = False
+        else:
+            page_index += 1
+    
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
+
     return data_df
 
 def get_sw_ts_day(
@@ -2379,7 +2551,8 @@ def get_sw_ts_day(
     ):
     """Request daily surface water timeseries data
 
-    Args:station_number (str, optional): string, climate data station number. Defaults to None.
+    Args:
+        station_number (str, optional): string, climate data station number. Defaults to None.
         abbrev (_type_, optional): string, tuple or list of surface water station abbreviation. Defaults to None.
         station_number (_type_, optional): string, surface water station number. Defaults to None.
         usgs_id (_type_, optional): string, tuple or list of USGS ID. Defaults to None.
@@ -2399,26 +2572,26 @@ def get_sw_ts_day(
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/?"
 
     # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = collapse_vector(
+    abbrev = _collapse_vector(
         vect = abbrev, 
         sep  = "%2C+"
         )
 
     # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = collapse_vector(
+    usgs_id = _collapse_vector(
         vect = usgs_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -2462,17 +2635,18 @@ def get_sw_ts_day(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2523,26 +2697,26 @@ def get_sw_ts_month(
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsmonth/?"
 
     # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = collapse_vector(
+    abbrev = _collapse_vector(
         vect = abbrev, 
         sep  = "%2C+"
         )
 
     # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = collapse_vector(
+    usgs_id = _collapse_vector(
         vect = usgs_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -2586,17 +2760,18 @@ def get_sw_ts_month(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2644,26 +2819,26 @@ def get_sw_ts_wyear(
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertswateryear/?"
 
     # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = collapse_vector(
+    abbrev = _collapse_vector(
         vect = abbrev, 
         sep  = "%2C+"
         )
 
     # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = collapse_vector(
+    usgs_id = _collapse_vector(
         vect = usgs_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -2707,17 +2882,18 @@ def get_sw_ts_wyear(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -2774,7 +2950,7 @@ def get_telemetry_stations(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = check_aoi(
+    aoi_lst = _check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -2785,7 +2961,7 @@ def get_telemetry_stations(
     radius = aoi_lst[2]
 
     # collapse site_id list, tuple, vector of site_id into query formatted string
-    abbrev = collapse_vector(
+    abbrev = _collapse_vector(
         vect = abbrev, 
         sep  = "%2C+"
         )
@@ -2861,6 +3037,12 @@ def get_telemetry_stations(
         else:
             page_index += 1
     
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
+
     return data_df
 
 def get_telemetry_ts(
@@ -2895,14 +3077,14 @@ def get_telemetry_ts(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
 
     # parse start_date into query string format
-    start_date = parse_date(
+    start_date = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = parse_date(
+    end_date = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -2957,17 +3139,18 @@ def get_telemetry_ts(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
         
         # extract dataframe from list column
         cdss_df  = cdss_req.json() 
@@ -3026,7 +3209,7 @@ def get_water_rights_netamount(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = check_aoi(
+    aoi_lst = _check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -3077,17 +3260,18 @@ def get_water_rights_netamount(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -3102,6 +3286,12 @@ def get_water_rights_netamount(
             more_pages = False
         else:
             page_index += 1
+
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
 
     return data_df
 
@@ -3137,7 +3327,7 @@ def get_water_rights_trans(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/transaction/?"
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = check_aoi(
+    aoi_lst = _check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -3188,17 +3378,18 @@ def get_water_rights_trans(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -3214,6 +3405,12 @@ def get_water_rights_trans(
         else:
             page_index += 1
 
+    # mask data if necessary
+    data_df = _aoi_mask(
+        aoi = aoi,
+        pts = data_df
+        )
+    
     return data_df
 
 def get_call_analysis_wdid(
@@ -3248,14 +3445,14 @@ def get_call_analysis_wdid(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
     
     # parse start_date into query string format
-    start = parse_date(
+    start = _parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
         )
 
     # parse end_date into query string format
-    end = parse_date(
+    end = _parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -3298,17 +3495,18 @@ def get_call_analysis_wdid(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -3387,17 +3585,18 @@ def get_source_route_framework(
             cdss_req = requests.get(url, timeout = 4)
             cdss_req.raise_for_status()
         except requests.exceptions.HTTPError as errh:
-            print("\n" + "HTTP Error:\n" + errh, "\n")
-            print("Client response:\n" + errh.response.text, "\n")
+            print("HTTP Error:\n" + errh)
+            print("Client response:\n" + errh.response.text)
         except requests.exceptions.ConnectionError as errc:
-            print("\n" + "Connection Error:\n" + errc, "\n")
-            print("Client response:\n" + errc.response.text, "\n")
+            print("Connection Error:\n" + errc)
+            print("Client response:\n" + errc.response.text)
         except requests.exceptions.Timeout as errt:
-            print("\n" + "Timeout Error:\n" + errt, "\n")
-            print("Client response:\n" + errt.response.text, "\n")
+            print("Timeout Error:\n" + errt)
+            print("Client response:\n" + errt.response.text)
         except requests.exceptions.RequestException as err:
-            print("\n" + "Exception raised:\n" + err, "\n")
-            print("Client response:\n" + err.response.text,  "\n")
+            print("Exception raised:\n" + err)
+            print("Client response:\n" + err.response.text)
+
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -3415,7 +3614,7 @@ def get_source_route_framework(
 
     return data_df
 
-def parse_date(
+def _parse_date(
     date   = None,
     start  = True,
     format =  "%m-%d-%Y"
@@ -3450,7 +3649,7 @@ def parse_date(
 
     return date
 
-def collapse_vector(
+def _collapse_vector(
     vect = None, 
     sep  = "%2C+"
     ):
@@ -3474,17 +3673,110 @@ def collapse_vector(
     
     return vect
 
-def extract_coords(
+def _aoi_error_msg():
+    """
+    Function to return error message to user when aoi is not valid.
+    Returns:
+        string: print statement for aoi errors
+    """
+
+    msg = ("\nInvalid 'aoi' argument, 'aoi' must be one of the following:\n" + 
+    "1. List/Tuple of an XY coordinate pair\n" +
+    "2. Pandas DataFrame containing XY coordinates\n" +
+    "3. a shapely Point/Polygon/LineString\n" +
+    "4. Geopandas GeoDataFrame containing a Polygon/LineString/LinearRing/Point geometry\n" +
+    "5. Geopandas GeoSeries containing a single Point\n")
+
+    return msg
+
+def _check_coord_crs(epsg_code, lng, lat):
+
+    """Function that checks if a set of longitude and latitude points are within a given EPSG space.
+
+    Returns:
+        boolean: True if the coordinates are within the provided EPSG space, False otherwise.
+    """
+    # given crs epsg code
+    crs = pyproj.CRS.from_user_input(epsg_code)
+
+    # if lng/lat fall within CRS space
+    if((crs.area_of_use.south <= lat <= crs.area_of_use.north) and (crs.area_of_use.west <= lng <= crs.area_of_use.east)):
+        crs_check = True
+    else:
+        crs_check = False
+
+    return crs_check
+
+def _extract_shapely_coords(aoi):
+    """Function for extracting coordinates from a shapely Polygon/LineString/Point
+    Internal helper function used in location search queries.
+
+    Args:
+        aoi (shapely Polygon/LineString/Point): shapely Polygon/LineString/Point object to extract coordinates from
+
+    Returns:
+        list: list of string coordinates with precision of 5 decimal places
+    """
+
+    # ensure that the shapely geometry is either a Polygon, LineString or a Point
+    if(isinstance(aoi, (shapely.geometry.polygon.Polygon, shapely.geometry.linestring.LineString, shapely.geometry.point.Point))):
+
+        # if geometry is Polygon or Linestring
+        if(isinstance(aoi, (shapely.geometry.polygon.Polygon, shapely.geometry.linestring.LineString))):
+            # extract lng/lat coords
+            lng = aoi.centroid.x
+            lat = aoi.centroid.y
+
+            # lng, lat coordinates
+            coord_lst = [lng, lat]
+            
+            # Valid coords in correct CRS space
+            if(_check_coord_crs(epsg_code = 4326, lng = lng, lat = lat)):
+
+                # round coordinates to 5 decimal places
+                coord_lst = [f'{num:.5f}' for num in coord_lst]
+
+                # return list of coordinates
+                return coord_lst
+
+            else:
+                raise Exception("Invalid 'aoi' CRS, must convert 'aoi' CRS to epsg:4326")
+
+        # if geometry is a Point
+        if(isinstance(aoi, (shapely.geometry.point.Point))):
+            # extract lng/lat coords
+            lng = aoi.x
+            lat = aoi.y
+            
+            # lng, lat coordinates
+            coord_lst = [lng, lat]
+
+            # Valid coords in correct CRS space
+            if(_check_coord_crs(epsg_code = 4326, lng = lng, lat = lat)):
+
+                # round coordinates to 5 decimal places
+                coord_lst = [f'{num:.5f}' for num in coord_lst]
+
+                # return list of coordinates
+                return coord_lst
+
+            else:
+                raise Exception("Invalid 'aoi' CRS, must convert 'aoi' CRS to epsg:4326")
+    else:
+        raise Exception("Invalid 'aoi' shapely geometry, must be either a shapely Polygon, LineString or Point")
+
+
+def _extract_coords(
     aoi = None
     ):
 
     """Internal function for extracting XY coordinates from aoi arguments
-    Function takes in a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries of spatial objects,
+    Function takes in a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries of spatial objects,
     and returns a list of length 2, indicating the XY coordinate pair. 
     If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
 
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
     
     Returns:
         list object: list object of an XY coordinate pair
@@ -3498,12 +3790,9 @@ def extract_coords(
     else:
 
         # make sure 'aoi' is one of supported types
-        if(isinstance(aoi, (list, tuple, geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame, pd.core.frame.DataFrame)) is False):
-            raise Exception(("Invalid 'aoi' argument, 'aoi' must be one of the following:\n" + 
-            "List/Tuple of an XY coordinate pair\n" +
-            "2 column XY Pandas DataFrame\n" +
-            "Geopandas GeoDataFrame containing a Polygon, LineString, LinearRing, or Point\n" +
-            "Geopandas GeoSeries containing a Point\n"))
+        if(isinstance(aoi, (list, tuple, geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame, 
+        pd.core.frame.DataFrame, shapely.geometry.polygon.Polygon, shapely.geometry.linestring.LineString, shapely.geometry.point.Point)) is False):
+            raise Exception(_aoi_error_msg())
 
         # check if aoi is a list or tuple
         if(isinstance(aoi, (list, tuple))):
@@ -3513,20 +3802,39 @@ def extract_coords(
                 # make coordinate list of XY values
                 coord_lst = [aoi[0], aoi[1]]
 
-                # return list of coordinates
-                return coord_lst
+                # round coordinates to 5 decimal places
+                coord_lst = [float(num) for num in coord_lst]
+
+                # Valid coords in correct CRS space
+                if(_check_coord_crs(epsg_code = 4326, lng = coord_lst[0], lat = coord_lst[1])):
+
+                    # round coordinates to 5 decimal places
+                    coord_lst = [f'{num:.5f}' for num in coord_lst]
+
+                    # return list of coordinates
+                    return coord_lst
+
+                else:
+                    raise Exception("Invalid 'aoi' CRS, must convert 'aoi' CRS to epsg:4326")
 
             else:
 
                 # return list of coordinates
-                raise Exception(("Invalid 'aoi' argument, 'aoi' must be one of the following:\n" + 
-                "List/Tuple of an XY coordinate pair\n" +
-                "2 column XY Pandas DataFrame\n" +
-                "Geopandas GeoDataFrame containing a Polygon, LineString, LinearRing, or Point\n" +
-                "Geopandas GeoSeries containing a Point\n"))
+                raise Exception(_aoi_error_msg())
+
+        # check if aoi is a shapely Polygon/LineString/Point
+        if("shapely" in str(type(aoi))):
+
+            # extract coordinates from shapely geometry objects
+            coord_lst = _extract_shapely_coords(aoi = aoi)
+
+            return coord_lst 
 
         # check if aoi is a geopandas geoseries or geodataframe 
         if(isinstance(aoi, (geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame))):
+            
+            if(len(aoi) > 1):
+                raise Exception(_aoi_error_msg())
 
             # convert CRS to 5070
             aoi = aoi.to_crs(5070)
@@ -3547,6 +3855,10 @@ def extract_coords(
 
                 # lng, lat coordinates
                 coord_lst = [lng, lat]
+                
+                # round coordinates to 5 decimal places
+                coord_lst = [f'{num:.5f}' for num in coord_lst]
+                # coord_lst = [round(num, 5) for num in coord_lst] 
 
                 # return list of coordinates
                 return coord_lst
@@ -3562,7 +3874,10 @@ def extract_coords(
                     
                     # lng, lat coordinates
                     coord_lst = [lng, lat]
-
+                    
+                    # round coordinates to 5 decimal places
+                    coord_lst = [f'{num:.5f}' for num in coord_lst]
+                    
                     # return list of coordinates
                     return coord_lst
 
@@ -3576,23 +3891,29 @@ def extract_coords(
                     # lng, lat coordinates
                     coord_lst = [lng, lat]
 
+                    # round coordinates to 5 decimal places
+                    coord_lst = [f'{num:.5f}' for num in coord_lst]
+
                     # return list of coordinates
                     return coord_lst
                     
         # check if aoi is a Pandas dataframe
         if(isinstance(aoi, (pd.core.frame.DataFrame))):
-
+            
             # extract first and second columns
             lng = float(aoi.iloc[:, 0])
             lat = float(aoi.iloc[:, 1])
 
             # lng, lat coordinates
             coord_lst = [lng, lat]
+            
+            # round coordinates to 5 decimal places
+            coord_lst = [f'{num:.5f}' for num in coord_lst]
 
             # return list of coordinates
             return coord_lst
 
-def check_radius(
+def _check_radius(
     aoi    = None,
     radius = None
     ):
@@ -3600,7 +3921,7 @@ def check_radius(
     """Internal function for radius argument value is within the valid value range for location search queries. 
 
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
 
     Returns:
@@ -3640,7 +3961,7 @@ def check_radius(
     # Return radius value
     return radius
 
-def check_aoi(
+def _check_aoi(
     aoi    = None, 
     radius = None
     ):
@@ -3653,7 +3974,7 @@ def check_aoi(
     If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
 
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
 
     Returns:
@@ -3667,10 +3988,10 @@ def check_aoi(
     # extract lat/long coords for query
     if(aoi is not None):
         # extract coordinates from matrix/dataframe/sf object
-        coord_df = extract_coords(aoi = aoi)
+        coord_df = _extract_coords(aoi = aoi)
         
         # check radius is valid and fix if necessary
-        radius = check_radius(
+        radius = _check_radius(
             aoi    = aoi,
             radius = radius
             )
@@ -3690,3 +4011,64 @@ def check_aoi(
     
     # return lng, lat, radius list
     return aoi_lst  
+
+def _aoi_mask(
+    aoi = None,
+    pts = None
+    ):
+
+    """For location search queries using a polygon, the response data from the CDSS API will be masked to the polygon area, removing any extra points.
+    Internal helper function, if aoi is None, then the function will just return the original dataset. 
+
+    Args:
+        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        pts (pandas dataframe): pandas dataframe of points that should be masked to the given aoi. Dataframe must contain "utmY" and "utmX" columns
+
+    Returns:
+        pandas dataframe: pandas dataframe with all points within the given aoi polygon area
+    """
+
+    # if AOI and pts are None, return None
+    if all(i is None for i in [aoi, pts]):
+        return None
+
+    # if no 'aoi' is given (None), just return original pts data. Default behavior
+    if(aoi is None):
+        return pts
+    
+    # check if aoi is a shapely geometry polygon
+    if(isinstance(aoi, (shapely.geometry.polygon.Polygon))):
+
+        # if aoi geometry type is polygon/line/linearRing
+        if("Polygon" in aoi.geom_type):
+
+            rel_pts = geopandas.overlay(
+                geopandas.GeoDataFrame(pts, geometry = geopandas.points_from_xy(pts['utmX'], pts['utmY'])).set_crs(26913).to_crs(4326), 
+                geopandas.GeoDataFrame(index = [0], crs = 'epsg:4326', geometry = [aoi]), 
+                how = 'intersection'
+                )
+
+            return rel_pts
+        else:
+            return pts
+    
+        
+    # check if aoi is a geopandas geoseries or geodataframe 
+    if(isinstance(aoi, (geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame))):
+
+        # if aoi geometry type is polygon/line/linearRing
+        if(["Polygon"] in aoi.geom_type.values):
+
+            # convert CRS to 4326
+            aoi = aoi.to_crs(4326)
+            
+            rel_pts = geopandas.overlay(
+                geopandas.GeoDataFrame(pts, geometry = geopandas.points_from_xy(pts['utmX'], pts['utmY'])).set_crs(26913).to_crs(4326), 
+                aoi, 
+                how = 'intersection'
+                )
+            return rel_pts
+        else:
+            return pts
+    else:
+        return pts

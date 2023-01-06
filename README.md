@@ -25,15 +25,26 @@ The Colorado’s Decision Support Systems (CDSS) is a water management system cr
 
 Thank you to those at CWCB and DWR for providing an accessible and well documented REST API!
 
+<style>
+div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
+</style>
+<div class = "blue">
+If you are looking for the equivalent R package, see [**cdssr**](https://github.com/anguswg-ucsb/cdssr)
+</div>
+
 ---
 
-[**GitHub**](https://github.com/anguswg-ucsb/cdsspy)
+- [**cdssr GitHub (R)**](https://github.com/anguswg-ucsb/cdssr)
 
-[**PyPI**](https://pypi.org/project/cdsspy/)
+- [**cdsspy Github (Python)**](https://github.com/anguswg-ucsb/cdsspy)
 
-[**cdssr (R Package)**](https://github.com/anguswg-ucsb/cdssr)
+- [**cdssr documentation**](https://anguswg-ucsb.github.io/cdssr/)
+
+- [**cdsspy PyPI**](https://pypi.org/project/cdsspy/)
 
 ---
+
+<br> 
 
 ## Installation
 Install the latest version of `cdsspy` from PyPI:
