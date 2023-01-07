@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.1"
+__version__ = "1.1.2"
 
 import pandas as pd
 import requests
@@ -1417,8 +1417,8 @@ def get_ref_telemetry_params(
     return data_df
 
 def get_ref_climate_params(
-    param   = None, 
-    api_key            = None
+    param      = None, 
+    api_key    = None
     ):
     """Return climate station parameter reference table
     
@@ -3513,7 +3513,6 @@ def _extract_coords(
                 
                 # round coordinates to 5 decimal places
                 coord_lst = [f'{num:.5f}' for num in coord_lst]
-                # coord_lst = [round(num, 5) for num in coord_lst] 
 
                 # return list of coordinates
                 return coord_lst
@@ -3524,9 +3523,9 @@ def _extract_coords(
                 if(isinstance(aoi, (geopandas.geoseries.GeoSeries))):
 
                     # convert to 4326, and extract lat/lng from Pandas GeoSeries
-                    lng = float(aoi.to_crs(4326).apply(lambda p: p.x))
-                    lat = float(aoi.to_crs(4326).apply(lambda p: p.y))
-                    
+                    lng = float(aoi.to_crs(4326).x)
+                    lat = float(aoi.to_crs(4326).y)
+
                     # lng, lat coordinates
                     coord_lst = [lng, lat]
                     
@@ -3540,9 +3539,9 @@ def _extract_coords(
                 if(isinstance(aoi, (geopandas.geodataframe.GeoDataFrame))):
 
                     # convert to 4326, and extract lat/lng from Pandas GeoDataFrame
-                    lng = float(aoi.to_crs(4326).apply(lambda p: p.x)[0])
-                    lat = float(aoi.to_crs(4326).apply(lambda p: p.y)[0])
-                            
+                    lng = float(aoi.to_crs(4326)['geometry'].x)
+                    lat = float(aoi.to_crs(4326)['geometry'].y)
+                
                     # lng, lat coordinates
                     coord_lst = [lng, lat]
 
@@ -3615,6 +3614,7 @@ def _check_radius(
     
     # Return radius value
     return radius
+
 
 def _check_aoi(
     aoi    = None, 
