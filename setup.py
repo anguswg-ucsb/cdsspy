@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="cdsspy",                     # This is the name of the package
-    version="1.1.2",                        # The initial release version
+    version="1.1.3",                        # The initial release version
     author="Angus Watters",                     # Full name of the author
     description="Python package for accessing CDSS API web services",
     long_description=long_description,      # Long description read from the the readme file
@@ -19,5 +19,5 @@ setuptools.setup(
     python_requires='>=3.6',                # Minimum version requirement of the package
     py_modules=["cdsspy"],             # Name of the python package
     package_dir={'':'cdsspy/src'},     # Directory of the source code of the package
-    install_requires=['pandas', 'datetime', 'requests']
+    install_requires=['pandas', 'datetime', 'requests', 'geopandas', 'shapely', 'pyproj']
 )

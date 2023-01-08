@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.2"
+__version__ = "1.1.3"
 
 import pandas as pd
 import requests
@@ -3337,10 +3337,11 @@ def _aoi_error_msg():
 
     msg = ("\nInvalid 'aoi' argument, 'aoi' must be one of the following:\n" + 
     "1. List/Tuple of an XY coordinate pair\n" +
-    "2. Pandas DataFrame containing XY coordinates\n" +
-    "3. a shapely Point/Polygon/LineString\n" +
-    "4. Geopandas GeoDataFrame containing a Polygon/LineString/LinearRing/Point geometry\n" +
-    "5. Geopandas GeoSeries containing a single Point\n")
+    "2. Dictionary with X and Y keys\n" +
+    "3. Pandas DataFrame containing XY coordinates\n" +
+    "4. a shapely Point/Polygon/LineString\n" +
+    "5. Geopandas GeoDataFrame containing a Polygon/LineString/LinearRing/Point geometry\n" +
+    "6. Geopandas GeoSeries containing a Polygon/LineString/Point geometry\n")
 
     return msg
 
@@ -3421,17 +3422,18 @@ def _extract_shapely_coords(aoi):
         raise Exception("Invalid 'aoi' shapely geometry, must be either a shapely Polygon, LineString or Point")
 
 
+
 def _extract_coords(
     aoi = None
     ):
 
     """Internal function for extracting XY coordinates from aoi arguments
-    Function takes in a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries of spatial objects,
+    Function takes in a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries of spatial objects,
     and returns a list of length 2, indicating the XY coordinate pair. 
     If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
 
     Args:
-        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dictionary, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
     
     Returns:
         list object: list object of an XY coordinate pair
@@ -3445,7 +3447,7 @@ def _extract_coords(
     else:
 
         # make sure 'aoi' is one of supported types
-        if(isinstance(aoi, (list, tuple, geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame, 
+        if(isinstance(aoi, (list, tuple, dict, geopandas.geoseries.GeoSeries, geopandas.geodataframe.GeoDataFrame, 
         pd.core.frame.DataFrame, shapely.geometry.polygon.Polygon, shapely.geometry.linestring.LineString, shapely.geometry.point.Point)) is False):
             raise Exception(_aoi_error_msg())
 
@@ -3497,28 +3499,48 @@ def _extract_coords(
             # if aoi geometry type is polygon/line/linearRing
             if(["Polygon", 'LineString', 'LinearRing'] in aoi.geom_type.values):
 
-                # get centroid of polygon, and convert to 4326 and add lng/lat as column
-                aoi["lng"] = aoi.centroid.to_crs(4326).map(lambda p: p.x)
-                aoi["lat"] = aoi.centroid.to_crs(4326).map(lambda p: p.y)
+                # checking if point is geopandas Geoseries
+                if(isinstance(aoi, (geopandas.geoseries.GeoSeries))):
 
-                # subset just lng/lat cols
-                aoi_coords = aoi.loc[ : , ['lng', 'lat']]
+                    # get centroid of polygon, and convert to 4326 and add lng/lat as column
+                    lng = float(aoi.centroid.to_crs(4326).geometry.x)
+                    lat = float(aoi.centroid.to_crs(4326).geometry.y)
 
-                # extract lat/lng from centroid of polygon
-                lng = float(aoi_coords["lng"])
-                lat = float(aoi_coords["lat"])
+                    # lng, lat coordinates
+                    coord_lst = [lng, lat]
+                    
+                    # round coordinates to 5 decimal places
+                    coord_lst = [f'{num:.5f}' for num in coord_lst]
 
-                # lng, lat coordinates
-                coord_lst = [lng, lat]
-                
-                # round coordinates to 5 decimal places
-                coord_lst = [f'{num:.5f}' for num in coord_lst]
+                    # return list of coordinates
+                    return coord_lst
 
-                # return list of coordinates
-                return coord_lst
+                # checking if point is geopandas GeoDataFrame
+                if(isinstance(aoi, (geopandas.geodataframe.GeoDataFrame))):
+
+                    # get centroid of polygon, and convert to 4326 and add lng/lat as column
+                    aoi["lng"] = aoi.centroid.to_crs(4326).map(lambda p: p.x)
+                    aoi["lat"] = aoi.centroid.to_crs(4326).map(lambda p: p.y)
+
+                    # subset just lng/lat cols
+                    aoi_coords = aoi.loc[ : , ['lng', 'lat']]
+
+                    # extract lat/lng from centroid of polygon
+                    lng = float(aoi_coords["lng"])
+                    lat = float(aoi_coords["lat"])
+
+                    # lng, lat coordinates
+                    coord_lst = [lng, lat]
+                    
+                    # round coordinates to 5 decimal places
+                    coord_lst = [f'{num:.5f}' for num in coord_lst]
+
+                    # return list of coordinates
+                    return coord_lst
 
             # if aoi geometry type is point
             if("Point" in aoi.geom_type.values):
+
                 # checking if point is geopandas Geoseries
                 if(isinstance(aoi, (geopandas.geoseries.GeoSeries))):
 
@@ -3557,6 +3579,22 @@ def _extract_coords(
             # extract first and second columns
             lng = float(aoi.iloc[:, 0])
             lat = float(aoi.iloc[:, 1])
+
+            # lng, lat coordinates
+            coord_lst = [lng, lat]
+            
+            # round coordinates to 5 decimal places
+            coord_lst = [f'{num:.5f}' for num in coord_lst]
+
+            # return list of coordinates
+            return coord_lst
+
+        # check if aoi is a dictionary
+        if(isinstance(aoi, (dict))):
+            
+            # extract "X" and "Y" dict keys
+            lng = float(aoi["X"])
+            lat = float(aoi["Y"])
 
             # lng, lat coordinates
             coord_lst = [lng, lat]
