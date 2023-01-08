@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.3"
+__version__ = "1.1.4"
 
 import pandas as pd
 import requests
@@ -3761,7 +3761,7 @@ def _aoi_mask(
             # get intersection of points and polygons 
             rel_pts = geopandas.overlay(
                 geopandas.GeoDataFrame(pts, geometry = geopandas.points_from_xy(pts['utmX'], pts['utmY'])).set_crs(26913).to_crs(4326), 
-                geopandas.GeoDataFrame(aoi["geometry"]),
+                geopandas.GeoDataFrame(aoi.geometry),
                 how = 'intersection'
                 )
 
