@@ -31,13 +31,13 @@ Thank you to those at CWCB and DWR for providing an accessible and well document
 
 ---
 
-- [**cdssr GitHub (R)**](https://github.com/anguswg-ucsb/cdssr)
+- [**cdssr (R)**](https://github.com/anguswg-ucsb/cdssr)
 
 - [**cdssr documentation**](https://anguswg-ucsb.github.io/cdssr/)
 
-- [**cdsspy GitHub (Python)**](https://github.com/anguswg-ucsb/cdsspy)
+- [**cdsspy (Python)**](https://github.com/anguswg-ucsb/cdsspy)
 
-- [**cdsspy PyPI**](https://pypi.org/project/cdsspy/)
+- [**cdsspy documentation**](https://pypi.org/project/cdsspy/)
 
 ---
 
