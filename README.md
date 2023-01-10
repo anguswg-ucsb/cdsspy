@@ -27,7 +27,7 @@ Thank you to those at CWCB and DWR for providing an accessible and well document
 
 <br>
 
-> See [**`cdssr`**](https://github.com/anguswg-ucsb/cdssr), for the R version of this package
+> See [**`cdssr`**](https://github.com/anguswg-ucsb/cdssr), for the **R** version of this package
 
 ---
 
@@ -44,7 +44,7 @@ Thank you to those at CWCB and DWR for providing an accessible and well document
 <br> 
 
 ## **Installation**
-Install the latest version of `cdsspy` from PyPI:
+Install the latest version of **`cdsspy`** from PyPI:
 
 ``` 
 pip install cdsspy
