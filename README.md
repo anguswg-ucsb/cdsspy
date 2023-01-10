@@ -272,4 +272,5 @@ well_measure = cdsspy.get_gw_wl_wellmeasures(
     end_date   = "2022-01-01"
     )
 ```
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot.png)
+
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot2.png)
