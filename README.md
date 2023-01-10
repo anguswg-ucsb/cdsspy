@@ -44,7 +44,7 @@ Thank you to those at CWCB and DWR for providing an accessible and well document
 <br> 
 
 ## **Installation**
-Install the latest version of **`cdsspy`** from PyPI:
+Install the latest version of **`cdsspy`** from [PyPI](https://pypi.org/project/cdsspy/):
 
 ``` 
 pip install cdsspy
