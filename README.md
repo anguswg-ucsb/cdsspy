@@ -170,7 +170,7 @@ stations  = cdsspy.get_telemetry_stations(
 
 The gif below highlights the masking process that is done when a polygon is used as the input for conducting a location search. 
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly.gif)
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly2.gif)
 
 <br>
 <br>
