@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 import pandas as pd
 import requests
@@ -3221,6 +3221,7 @@ def get_source_route_framework(
 
     return data_df
 
+
 def _parse_date(
     date   = None,
     start  = True,
@@ -3652,7 +3653,6 @@ def _check_radius(
     
     # Return radius value
     return radius
-
 
 def _check_aoi(
     aoi    = None, 

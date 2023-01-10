@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.4"
+__version__ = "1.1.5"
 
 import pandas as pd
 import requests
@@ -52,7 +52,7 @@ def get_admin_calls(
     # parse end_date into query string format
     end_date = _parse_date(
         date   = end_date,
-        start  = False,
+        start  = False,`    `
         format = "%m-%d-%Y"
         )
 

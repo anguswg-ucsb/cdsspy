@@ -5,7 +5,7 @@ with open("README.md", "r") as fh:
 
 setuptools.setup(
     name="cdsspy",                     # This is the name of the package
-    version="1.1.4",                        # The initial release version
+    version="1.1.5",                        # The initial release version
     author="Angus Watters",                     # Full name of the author
     description="Python package for accessing CDSS API web services",
     long_description=long_description,      # Long description read from the the readme file
