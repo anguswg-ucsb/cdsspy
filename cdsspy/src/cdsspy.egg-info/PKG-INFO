@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.1.5
+Version: 1.1.6
 Summary: Python package for accessing CDSS API web services
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
@@ -31,27 +31,23 @@ Services</a>
 
 <hr>
 
-The goal of **`cdsspy`** is to provide functions that help Python users to navigate, explore, and make requests to the CDSS REST API web service. 
+The goal of [**`cdsspy`**](https://pypi.org/project/cdsspy/) is to provide functions that help Python users to navigate, explore, and make requests to the CDSS REST API web service. 
 
 The Coloradoâ€™s Decision Support Systems (CDSS) is a water management system created and developed by the Colorado Water Conservation Board (CWCB) and the Colorado Division of Water Resources (DWR).
 
 Thank you to those at CWCB and DWR for providing an accessible and well documented REST API!
 
-<style>
-div.blue { background-color:#e6f0ff; border-radius: 5px; padding: 10px;}
-</style>
-<div class = "blue">
-If you are looking for the equivalent R package, see 
-<a href="https://github.com/anguswg-ucsb/cdssr"><strong>cdssr</strong></a>
-</div>
+<br>
+
+> See [**`cdssr`**](https://github.com/anguswg-ucsb/cdssr), for the R version of this package
 
 ---
 
 - [**cdssr GitHub (R)**](https://github.com/anguswg-ucsb/cdssr)
 
-- [**cdsspy Github (Python)**](https://github.com/anguswg-ucsb/cdsspy)
-
 - [**cdssr documentation**](https://anguswg-ucsb.github.io/cdssr/)
+
+- [**cdsspy GitHub (Python)**](https://github.com/anguswg-ucsb/cdsspy)
 
 - [**cdsspy PyPI**](https://pypi.org/project/cdsspy/)
 
@@ -59,7 +55,7 @@ If you are looking for the equivalent R package, see
 
 <br> 
 
-## Installation
+## **Installation**
 Install the latest version of `cdsspy` from PyPI:
 
 ``` 
@@ -144,7 +140,7 @@ telemetry_params = cdsspy.get_reference_tbl(
 
 <br>
 
-#### **Example: Locating telemetry stations by county:**
+### **Example: Locating telemetry stations by county:**
 
 ```python
 # identify telemetry stations in Boulder County
@@ -152,22 +148,13 @@ stations  = cdsspy.get_telemetry_stations(
     county = "Boulder"
     )
 ```
-<br>
-
-|    |   division |   waterDistrict | county   | stationName                                                    | waterSource         |   streamMile | abbrev   | stationType         | structureType   | parameter   |   longitude |   latitude |
-|---:|-----------:|----------------:|:---------|:---------------------------------------------------------------|:--------------------|-------------:|:---------|:--------------------|:----------------|:------------|------------:|-----------:|
-|  0 |          1 |               5 | BOULDER  | CLOUGH PRIVATE DITCH                                           | SAINT VRAIN CREEK   |       nan    | 0500536A | Diversion Structure | Ditch           | DISCHRG     |    -105.217 |    40.1941 |
-|  1 |          1 |               6 | BOULDER  | ANDERSON DITCH                                                 | BOULDER CREEK       |        23.58 | ANDDITCO | Diversion Structure | Ditch           | DISCHRG     |    -105.301 |    40.0132 |
-|  2 |          1 |               6 | BOULDER  | ANDREWS FARWELL DITCH                                          | SOUTH BOULDER CREEK |         1.5  | ANFDITCO | Diversion Structure | Ditch           | DISCHRG     |    -105.169 |    40.0178 |
-|  3 |          1 |               6 | BOULDER  | BASELINE RESERVOIR OUTLET                                      | BOULDER CREEK       |        19.18 | BASOUTCO | Stream Gage         | Reservoir       | DISCHRG     |    -105.198 |    39.9986 |
-|  4 |          1 |               6 | BOULDER  | BOULDER CREEK SUPPLY CANAL TO BOULDER CREEK ABOVE ERIE TURNOUT | BOULDER CREEK       |        15.5  | BCSCBCCO | Diversion Structure | Other           | DISCHRG     |    -105.193 |    40.053  |
-|  5 |          1 |               5 | BOULDER  | BOULDER RESERVOIR INLET                                        | LEFT HAND CREEK     |         8.66 | BFCINFCO | Stream Gage         | Reservoir       | DISCHRG     |    -105.218 |    40.0863 |
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/county_telem_stations2.png)
 
 <br>
+<br>
 
-#### **Example: Locating telemetry stations around a point**
+### **Example: Locating telemetry stations around a point**
 
 ```python
 # identify telemetry stations within a 15 mile radius of the center point of Boulder County
@@ -178,10 +165,12 @@ stations  = cdsspy.get_telemetry_stations(
 ```
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/poi_telem_stations.png)
+
+<br>
 <br>
 
-#### **Example: Locating telemetry stations within a spatial extent**
-If a polygon is given as the **aoi** input, a masking operation is done to ensure the returned points only include those that are *within* the given polygon. 
+### **Example: Locating telemetry stations within a spatial extent**
+A masking operation is performed when a location search is done using a **polygon**. This ensures that the function only returns points that are *within* the given polygon. 
 
 ```python
 # identify telemetry stations 15 miles around the centroid of a polygon
@@ -198,10 +187,11 @@ The gif below highlights the masking process that is done when a polygon is used
 <br>
 <br>
 <br>
+<br>
 
-## **Retrieve timeseries data** 
+## **Retrieve time series data** 
 
-The functions in the table below retrieve timeseries data from the various timeseries related CDSS API endpoints.  
+The functions in the table below retrieve time series data from the various time series related CDSS API endpoints.  
 
 |**-** |**Function**                    | **Description**                                                    | **Endpoint**                                 |
 |------|--------------------------------| -------------------------------------------------------------------|----------------------------------------------|
@@ -211,6 +201,7 @@ The functions in the table below retrieve timeseries data from the various times
 |4    | **get_sw_ts()**                | Returns Surface Water Time Series                                  | [surfacewater/surfacewaterts](https://dwr.state.co.us/rest/get/help#Datasets&#SurfaceWaterController&#gettingstarted&#jsonxml)        |
 |5    | **get_telemetry_ts()**         | Returns telemetry time series data (raw, hour, day) | [telemetrystations/telemetrytimeseries](https://dwr.state.co.us/rest/get/help#Datasets&#TelemetryStationsController&#gettingstarted&#jsonxml)|
 
+<br>
 <br>
 
 #### **Example: Daily discharge at a telemetry station**
@@ -233,6 +224,7 @@ discharge_ts   = cdsspy.get_telemetry_ts(
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/discharge_timeseries_plot2.png)
 
+<br>
 <br>
 
 #### **Example: Retrieve Diversion records for multiple structures**
@@ -265,6 +257,7 @@ diversion_rec  = cdsspy.get_structures_divrec(
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/divrec_facet_plot.png)
 
+<br>
 <br>
 <br>
 <br>

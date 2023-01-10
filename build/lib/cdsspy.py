@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.5"
+__version__ = "1.1.6"
 
 import pandas as pd
 import requests
@@ -18,7 +18,8 @@ def get_admin_calls(
     api_key             = None
     ):
     """Return active/historic administrative calls data
-    Make a request to the api/v2/administrative calls endpoint to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
+
+    Make a request to the api/v2/administrativecalls endpoints to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
 
     Args:
         division (int, str, optional): Water division to query for administrative calls. Defaults to None.
@@ -27,7 +28,7 @@ def get_admin_calls(
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
         active (bool, optional): whether to get active or historical administrative calls. Defaults to True which returns active administrative calls.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of active/historical administrative calls data
@@ -52,7 +53,7 @@ def get_admin_calls(
     # parse end_date into query string format
     end_date = _parse_date(
         date   = end_date,
-        start  = False,`    `
+        start  = False,
         format = "%m-%d-%Y"
         )
 
@@ -132,13 +133,15 @@ def get_climate_stations(
     api_key             = None
     ):
     """Return Climate Station information
-    Make a request to the climatedata/climatestations/ endpoint to locate climate stations by AOI, county, division, station name, Site ID or water_district.
+
+    Make a request to the climatedata/climatestations/ endpoint to locate climate stations via a spatial search, or by county, division, station name, Site ID or water district.
+
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): County to query for climate stations. Defaults to None.
         division (int, str, optional):  Water division to query for climate stations. Defaults to None.
-        station_name (str, optional): string, climate station name. Defaults to None.
+        station_name (str, optional):  climate station name. Defaults to None.
         site_id (str, tuple, list, optional): string, tuple or list of site IDs. Defaults to None.
         water_district (int, str, optional): Water district to query for climate stations. Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
@@ -245,6 +248,8 @@ def get_climate_frostdates(
     ):
     """Return climate stations frost dates 
 
+    Make a request to the /climatedata/climatestationfrostdates endpoint to retrieve climate stations frost dates data by station number within a given date range (start and end dates)
+
     Args:
         station_number (str, optional): climate data station number. Defaults to None.
         start_date (str, optional): date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
@@ -329,7 +334,7 @@ def get_climate_frostdates(
     return data_df
 
 
-def get_climate_ts_day(
+def _get_climate_ts_day(
     station_number      = None,
     site_id             = None,
     param               = None,
@@ -338,17 +343,19 @@ def get_climate_ts_day(
     api_key             = None
     ):
     """Return daily climate data
-
+    
+    Make a request to the /climatedata/climatestationtsday endpoint to retrieve climate stations daily time series data by station number, or Site IDs within a given date range (start and end dates)
+    
     Args:
-        station_number (str, optional): string, climate data station number. Defaults to None.
+        station_number (str, optional):  climate data station number. Defaults to None.
         site_id (str, tuple, list, optional): string, tuple or list of climate station site IDs. Defaults to None.
-        param (str): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        param (str):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: dataframe of climate station daily timeseries data
+        pandas dataframe object: dataframe of climate station daily time series data
     """
 
     # list of valid parameters
@@ -397,7 +404,7 @@ def get_climate_ts_day(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    print("Retrieving climate station daily timeseries data")
+    print("Retrieving climate station daily time series data")
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
@@ -443,7 +450,7 @@ def get_climate_ts_day(
     
     return data_df
 
-def get_climate_ts_month(
+def _get_climate_ts_month(
     station_number      = None,
     site_id             = None,
     param               = None,
@@ -452,17 +459,19 @@ def get_climate_ts_month(
     api_key             = None
     ):
     """Return monthly climate data
-
+    
+    Make a request to the /climatedata/climatestationtsmonth endpoint to retrieve climate stations monthly time series data by station number, or Site IDs within a given date range (start and end dates)
+    
     Args:
-        station_number (str, optional): string, climate data station number. Defaults to None.
-        site_id (str, optional): string, tuple or list of climate station site IDs. Defaults to None.
-        param (str, optional): string, climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        station_number (str, optional):  climate data station number. Defaults to None.
+        site_id (str, optional):  tuple or list of climate station site IDs. Defaults to None.
+        param (str, optional):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: dataframe of climate station monthly timeseries data
+        pandas dataframe object: dataframe of climate station monthly time series data
     """
     # list of valid parameters
     param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
@@ -510,7 +519,7 @@ def get_climate_ts_month(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving climate station monthly timeseries data")
+    print("Retrieving climate station monthly time series data")
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
@@ -556,6 +565,79 @@ def get_climate_ts_month(
     
     return data_df
 
+def get_climate_ts(
+    station_number      = None,
+    site_id             = None,
+    param               = None,
+    start_date          = None,
+    end_date            = None,
+    timescale           = None,
+    api_key             = None
+    ):
+
+    """Return climate station time series data
+
+    Make a request to the /climatedata/climatestationts endpoints to retrieve daily or monthly (climatestationtsday or climatestationtsmonth)climate station time series data by station number or Site IDs within a given date range (start and end dates)
+    
+    Args:
+        station_number (str, optional): climate data station number. Defaults to None.
+        site_id (str, optional): string, tuple or list of climate station site IDs. Defaults to None.
+        param (str, optional): climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        timescale (str, optional): timestep of the time series data to return, either "day" or "month". Defaults to None and will request daily time series.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of climate station time series data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [site_id, station_number]):
+        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+
+    # lists of valid timesteps
+    day_lst       = ['day', 'days', 'daily', 'd']
+    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+    timescale_lst = day_lst + month_lst
+
+    # if timescale is None, then defaults to "day"
+    if timescale is None: 
+        timescale = "day"
+        
+    # if parameter is NOT in list of valid parameters
+    if timescale not in timescale_lst:
+        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}")
+
+    # request daily climate time series data
+    if timescale in day_lst:    
+        clim_data = _get_climate_ts_day(
+            station_number      = station_number,
+            site_id             = site_id,
+            param               = param,
+            start_date          = start_date,
+            end_date            = end_date,
+            api_key             = api_key
+            )
+
+        # return daily climate time series data
+        return clim_data
+
+    # request monthly climate time series data
+    if timescale in month_lst:    
+
+        clim_data = _get_climate_ts_month(
+            station_number      = station_number,
+            site_id             = site_id,
+            param               = param,
+            start_date          = start_date,
+            end_date            = end_date,
+            api_key             = api_key
+            )
+
+        # return monthly climate time series data
+        return clim_data
+
 def get_gw_wl_wells(
     county              = None,
     designated_basin    = None,
@@ -566,6 +648,8 @@ def get_gw_wl_wells(
     api_key             = None
     ):
     """Search for groundwater water level wells
+    
+    Make a request to the groundwater/waterlevels/wells endpoint to retrieve groundwater water level wells data.
 
     Args:
         county (str, optional): County to query for groundwater water level wells. Defaults to None.
@@ -665,6 +749,8 @@ def get_gw_wl_wellmeasures(
     ):
     """Return groundwater water level well measurements
 
+    Make a request to the groundwater/waterlevels/wellmeasurements endpoint to retrieve groundwater water level well measurement data.
+
     Args:
         wellid (str): Well ID to query for groundwater water level measurements. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
@@ -759,7 +845,9 @@ def get_gw_gplogs_wells(
     api_key             = None
     ):
     """Search for groundwater geophysicallog wells
-
+    
+    Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysicallog wells data.
+    
     Args:
         county (str, optional): County to query for groundwater geophysicallog wells. Defaults to None.
         designated_basin (str, optional): Designated basin to query for groundwater geophysicallog wells. Defaults to None.
@@ -857,6 +945,8 @@ def get_gw_gplogs_geologpicks(
     ):
     """Return Groundwater Geophysical Log picks by well ID
 
+    Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysical log picks for the given well ID.
+    
     Args:
         wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
@@ -932,8 +1022,12 @@ def get_reference_tbl(
     ):
     """Return Reference Table reference table
     
+    Makes requests to the /referencetables/ endpoints and returns helpful reference tables. Reference tables can help identify valid inputs for querying CDSS API resources using cdsspy.  
+    For more detailed information visit: https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml.
+    
     Args:
-        table_namDee (str, optional): Name of the reference table to return. One of: "county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags". Defaults to none.
+        table_name (str, optional): name of the reference table to return. Must be one of:
+            ("county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"). Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     
     Returns:
@@ -948,76 +1042,76 @@ def get_reference_tbl(
 
     # retrieve county reference table
     if table_name == "county":
-        ref_table = get_ref_county(
+        ref_table = _get_ref_county(
             api_key = api_key
             )
         return ref_table
     
     # retrieve water districts reference table
     if table_name == "waterdistricts":
-        ref_table = get_ref_waterdistricts(
+        ref_table = _get_ref_waterdistricts(
             api_key = api_key
             )
         return ref_table
 
     # retrieve water divisions reference table
     if table_name == "waterdivisions":
-        ref_table = get_ref_waterdivisions(
+        ref_table = _get_ref_waterdivisions(
             api_key = api_key
             )
         return ref_table
 
     # retrieve management districts reference table
     if table_name == "managementdistricts":
-        ref_table = get_ref_managementdistricts(
+        ref_table = _get_ref_managementdistricts(
             api_key = api_key
             )
         return ref_table
 
     # retrieve designated basins reference table
     if table_name == "designatedbasins":
-        ref_table = get_ref_designatedbasins(
+        ref_table = _get_ref_designatedbasins(
             api_key = api_key
             )
         return ref_table
 
     # retrieve telemetry station parameters reference table
     if table_name == "telemetryparams":
-        ref_table = get_ref_telemetry_params(
+        ref_table = _get_ref_telemetry_params(
             api_key = api_key
             )
         return ref_table
 
     # retrieve climate station parameters reference table
     if table_name == "climateparams":
-        ref_table = get_ref_climate_params(
+        ref_table = _get_ref_climate_params(
             api_key = api_key
             )
         return ref_table
 
     # retrieve diversion record types reference table
     if table_name == "divrectypes":
-        ref_table = get_ref_divrectypes(
+        ref_table = _get_ref_divrectypes(
             api_key = api_key
             )
         return ref_table
 
     # retrieve station flags reference table
     if table_name == "flags":
-        ref_table = get_ref_stationflags(
+        ref_table = _get_ref_stationflags(
             api_key = api_key
             )
         return ref_table
         
-def get_ref_county(
+def _get_ref_county(
     county  = None, 
     api_key = None
     ):
     """Return county reference table
 
     Args:
-        county (str, optional): string, (optional) indicating the county to query, if no county is given, entire county dataframe is returned. Defaults to None.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        county (str, optional): County to query, if no county is given, entire county dataframe is returned. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe: dataframe of Colorado counties
@@ -1077,7 +1171,7 @@ def get_ref_county(
     return data_df
 
 
-def get_ref_waterdistricts(
+def _get_ref_waterdistricts(
     division       = None, 
     water_district = None,
     api_key        = None
@@ -1085,9 +1179,9 @@ def get_ref_waterdistricts(
     """Return water districts reference table
 
     Args:
-        division (str, optional): string, (optional) indicating the division to query, if no division is given, dataframe of all water districts is returned. Defaults to None.
-        water_district (str, optional): string, (optional) indicating the water district to query, if no water district is given, dataframe of all water districts is returned. Defaults to None.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        division (str, optional):  (optional) indicating the division to query, if no division is given, dataframe of all water districts is returned. Defaults to None.
+        water_district (str, optional):  (optional) indicating the water district to query, if no water district is given, dataframe of all water districts is returned. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe: dataframe of Colorado water_districts
@@ -1147,7 +1241,7 @@ def get_ref_waterdistricts(
 
     return data_df
 
-def get_ref_waterdivisions(
+def _get_ref_waterdivisions(
     division       = None, 
     api_key        = None
     ):
@@ -1155,7 +1249,7 @@ def get_ref_waterdivisions(
 
     Args:
         division (str, optional): Division to query, if no division is given, dataframe of all water divisions is returned. Defaults to None.
-        api_key (str, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe: dataframe of Colorado water divisions
@@ -1215,7 +1309,7 @@ def get_ref_waterdivisions(
 
     return data_df
 
-def get_ref_managementdistricts(
+def _get_ref_managementdistricts(
     management_district   = None, 
     api_key               = None
     ):
@@ -1282,7 +1376,7 @@ def get_ref_managementdistricts(
 
     return data_df
 
-def get_ref_designatedbasins(
+def _get_ref_designatedbasins(
     designated_basin   = None, 
     api_key            = None
     ):
@@ -1349,7 +1443,7 @@ def get_ref_designatedbasins(
 
     return data_df
 
-def get_ref_telemetry_params(
+def _get_ref_telemetry_params(
     param    = None, 
     api_key  = None
     ):
@@ -1416,7 +1510,7 @@ def get_ref_telemetry_params(
 
     return data_df
 
-def get_ref_climate_params(
+def _get_ref_climate_params(
     param      = None, 
     api_key    = None
     ):
@@ -1483,7 +1577,7 @@ def get_ref_climate_params(
 
     return data_df
 
-def get_ref_divrectypes(
+def _get_ref_divrectypes(
     divrectype   = None, 
     api_key      = None
     ):
@@ -1550,7 +1644,7 @@ def get_ref_divrectypes(
 
     return data_df
 
-def get_ref_stationflags(
+def _get_ref_stationflags(
     flag    = None, 
     api_key = None
     ):
@@ -1624,14 +1718,16 @@ def get_structure_divrecday(
     end_date      = None,
     api_key       = None
     ):
-    """Request Structure Daily Diversion/Release Records
+    """Return Structure Daily Diversion/Release Records
+
+    Make a request to the api/v2/structures/divrec/divrecday/ endpoint to retrieve daily structure diversion/release data for a specified WDID within a specified date range.
 
     Args:
-        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of daily structure diversion/releases records 
@@ -1723,14 +1819,16 @@ def get_structure_divrecmonth(
     end_date      = None,
     api_key       = None
     ):
-    """Request Structure Monthly Diversion/Release Records
+    """Return Structure Monthly Diversion/Release Records
+
+    Make a request to the api/v2/structures/divrec/divrecmonth/ endpoint to retrieve monthly structure  diversion/release data for a specified WDID within a specified date range.
 
     Args:
-        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of monthly structure diversion/releases records 
@@ -1821,14 +1919,16 @@ def get_structure_divrecyear(
     end_date      = None,
     api_key       = None
     ):
-    """Request Structure Annual Diversion/Release Records
+    """Return Structure Annual Diversion/Release Records
+
+    Make a request to the api/v2/structures/divrec/divrecyear/ endpoint to retrieve annual structure diversion/release data for a specified WDID within a specified date range.
 
     Args:
-        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional): string, indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of annual structure diversion/releases records 
@@ -1919,13 +2019,15 @@ def get_structure_stage(
     end_date      = None,
     api_key       = None
     ):
-    """Request Structure stage/volume Records
+    """Return Structure stage/volume Records
+
+    Make a request to the api/v2/structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
 
     Args:
-        wdid (str, optional): string, tuple or list of WDIDs code of structure. Defaults to None.
+        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  string, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of daily structure stage/volume records 
@@ -2020,15 +2122,17 @@ def get_structures(
     api_key        = None
 ):
     """Return list of administrative structures
+
     Make a request to the api/v2/structures endpoint to locate administrative structures via a spatial search or by division, county, water_district, GNIS, or WDID.
+
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): Indicating the county to query. Defaults to None.
         division (int, str, optional): Indicating the water division to query. Defaults to None.
         gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
         water_district (int, str, optional): Indicating the water district to query. Defaults to None.
-        wdid (string, tuple or list, optional): WDIDs code of structure. Defaults to None.
+        wdid (str, tuple or list, optional): WDIDs code of structure. Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -2142,10 +2246,11 @@ def get_sw_stations(
     api_key             = None
     ):
     """Return Surface Water Station information
-        Make a request to the /surfacewater/surfacewaterstations endpoint to locate surface water stations by AOI, station abbreviation, county, division, station name, USGS ID or water_district.    Args:
-        
+    
+    Make a request to the /surfacewater/surfacewaterstations endpoint to locate surface water stations via a spatial search, or by station abbreviation, county, division, station name, USGS ID or water_district.  
+
     Args:
-        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         abbrev (str, list, tuple, optional): surface water station abbreviation. Defaults to None.
         county (str, optional): County to query for surface water stations. Defaults to None.
@@ -2153,7 +2258,7 @@ def get_sw_stations(
         station_name (str, optional): surface water station name. Defaults to None.
         usgs_id (str, tuple or list , optional): USGS IDs. Defaults to None.
         water_district (int, str, optional): Water district to query for surface water stations. Defaults to None.
-        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     
     Returns:
         pandas dataframe object: dataframe of surface water station data
@@ -2263,19 +2368,21 @@ def get_sw_ts_day(
     end_date            = None,
     api_key             = None
     ):
-    """Request daily surface water timeseries data
-
+    """Return daily surface water time series data
+    
+    Make a request to the /surfacewater/surfacewatertsday endpoint to retrieve surface water stations daily timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+    
     Args:
-        station_number (str, optional): string, climate data station number. Defaults to None.
-        abbrev (_type_, optional): string, tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (_type_, optional): string, surface water station number. Defaults to None.
-        usgs_id (_type_, optional): string, tuple or list of USGS ID. Defaults to None.
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+        station_number (str, optional):  climate data station number. Defaults to None.
+        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+        station_number (int, str, optional):  surface water station number. Defaults to None.
+        usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: daily surface water timeseries data
+        pandas dataframe object: daily surface water time series data
     """
 
     # If all inputs are None, then return error message
@@ -2323,7 +2430,7 @@ def get_sw_ts_day(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    print("Retrieving daily surface water timeseries...")
+    print("Retrieving daily surface water time series...")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2377,18 +2484,21 @@ def get_sw_ts_month(
     end_date            = None,
     api_key             = None
     ):
-    """Request monthly surface water timeseries data
-
-    Args:station_number (str, optional): string, climate data station number. Defaults to None.
-        abbrev (_type_, optional): string, tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (_type_, optional): string, surface water station number. Defaults to None.
-        usgs_id (_type_, optional): string, tuple or list of USGS ID. Defaults to None.
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+    """Return monthly surface water time series data
+    
+    Make a request to the /surfacewater/surfacewatertsmonth endpoint to retrieve surface water stations monthly timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+    
+    Args:
+        station_number (str, optional):  climate data station number. Defaults to None.
+        abbrev (tuple, list, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+        station_number (int, str, optional):  surface water station number. Defaults to None.
+        usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: monthly surface water timeseries data
+        pandas dataframe object: monthly surface water time series data
     """
 
     # If all inputs are None, then return error message
@@ -2436,7 +2546,7 @@ def get_sw_ts_month(
     # Loop through pages until there are no more pages to get
     more_pages = True 
     
-    print("Retrieving monthly surface water timeseries...")
+    print("Retrieving monthly surface water time series...")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2487,18 +2597,21 @@ def get_sw_ts_wyear(
     end_date            = None,
     api_key             = None
     ):
-    """Request water year surface water timeseries data
+    """Return water year surface water time series data
 
-    Args:station_number (str, optional): string, climate data station number. Defaults to None.
-        abbrev (_type_, optional): string, tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (_type_, optional): string, surface water station number. Defaults to None.
-        usgs_id (_type_, optional): string, tuple or list of USGS ID. Defaults to None.
-        start_date (_type_, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (_type_, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (_type_, optional): string, API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+    Make a request to the /surfacewater/surfacewatertswateryear endpoint to retrieve surface water stations annual timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+
+    Args:
+        station_number (str, optional):  climate data station number. Defaults to None.
+        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+        station_number (int, str, optional):  surface water station number. Defaults to None.
+        usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: annual surface water timeseries data
+        pandas dataframe object: annual surface water time series data
     """
 
     # If all inputs are None, then return error message
@@ -2546,7 +2659,7 @@ def get_sw_ts_wyear(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving water year surface water timeseries...")
+    print("Retrieving water year surface water time series...")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2603,8 +2716,10 @@ def get_telemetry_stations(
     ):
     """Return Telemetry Station info
 
+    Make a request to the /telemetrystations/telemetrystation endpoint to locate telemetry stations via a spatial search, or by station abbreviation, county, division, GNIS ID, USGS ID, water_district or WDID.  
+
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         abbrev (str, tuple, list, optional): Abbreviation name (or list of abbreviations) of the telemetry station. Defaults to None.
         county (str, optional): County to query for telemetry stations. Defaults to None.
@@ -2721,7 +2836,9 @@ def get_telemetry_ts(
     include_third_party = True,
     api_key             = None
     ):
-    """Request Telemetry station timeseries data
+    """Return Telemetry station time series data
+
+    Make a request to the /telemetrystations/telemetrytimeseries endpoint to retrieve raw, hourly, or daily telemetry station timeseries data by station abbreviations, within a given date range (start and end dates).
 
     Args:
         abbrev (str, optional): Station abbreviation. Defaults to None.
@@ -2733,7 +2850,7 @@ def get_telemetry_ts(
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
-        pandas dataframe object: dataframe of telemetry station timeseries data
+        pandas dataframe object: dataframe of telemetry station time series data
     """
 
     # if no abbreviation is given, return error
@@ -2780,7 +2897,7 @@ def get_telemetry_ts(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    print("Retrieving telemetry station timeseries data\nTimescale:", timescale)
+    print("Retrieving telemetry station time series data\nTimescale:", timescale)
 
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
@@ -2843,8 +2960,11 @@ def get_water_rights_netamount(
     ):
     """Return water rights net amounts data
 
+    Make a request to the /waterrights/netamount endpoint to retrieve water rights net amounts data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
+    Returns current status of a water right based on all of its court decreed actions.
+
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): County to query for water rights. Defaults to None.
         division (int, str, optional):  Water division to query for water rights. Defaults to None.
@@ -2949,8 +3069,11 @@ def get_water_rights_trans(
     ):
     """Return water rights transactions data
 
+    Make a request to the /waterrights/transaction endpoint to retrieve water rights transactions data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
+    Returns List of court decreed actions that affect amount and use(s) that can be used by each water right.
+
     Args:
-        aoi (list, tuple, DataFrame, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
         county (str, optional): County to query for water rights. Defaults to None.
         division (int, str, optional):  Water division to query for water rights transactions. Defaults to None.
@@ -3052,7 +3175,9 @@ def get_call_analysis_wdid(
     api_key             = None
     ):
     """Return call analysis by WDID from analysis services API
-
+    
+    Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
+    
     Args:
         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
@@ -3150,6 +3275,8 @@ def get_source_route_framework(
     api_key             = None
     ):
     """Return call analysis by WDID from analysis services API
+
+    Makes a request to the analysisservices/watersourcerouteframework/ endpoint to retrieve the DWR source route framework reference table for the criteria specified.
 
     Args:
         division (int, str, optional):  Water division to query for water rights. Defaults to None.
@@ -3433,7 +3560,7 @@ def _extract_coords(
     If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
 
     Args:
-        aoi (list, tuple, dictionary, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
     
     Returns:
         list object: list object of an XY coordinate pair
@@ -3613,7 +3740,7 @@ def _check_radius(
     """Internal function for radius argument value is within the valid value range for location search queries. 
 
     Args:
-        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
 
     Returns:
@@ -3667,7 +3794,7 @@ def _check_aoi(
     If the object provided is a Polygon/LineString/LinearRing, the function will return the XY coordinates of the centroid of the spatial object.
 
     Args:
-        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         radius (int, str, optional): radius value between 1-150 miles. Defaults to None.
 
     Returns:
@@ -3714,7 +3841,7 @@ def _aoi_mask(
     Internal helper function, if aoi is None, then the function will just return the original dataset. 
 
     Args:
-        aoi (list, tuple, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
         pts (pandas dataframe): pandas dataframe of points that should be masked to the given aoi. Dataframe must contain "utmY" and "utmX" columns
 
     Returns:
