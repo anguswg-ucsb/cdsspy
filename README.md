@@ -235,10 +235,10 @@ ditch_wdids = structures[(structures["ciuCode"] == "A") & (structures["structure
 ditch_wdids = list(ditch_wdids['wdid'])
 
 # 3. Providing the WDID's as a list to get_structures_divrec()
-diversion_rec  = cdsspy.get_structures_divrec(
+diversion_rec  = cdsspy.get_structures_divrec_ts(
     wdid           = ditch_wdids,
     wc_identifier  = "diversion",
-    type           = "month"
+    timescale      = "month"
     )
 ```
 **Note:** Data availability can vary between structures (i.e. Missing data, not all structures have every data type/temporal resolution available, etc.) 

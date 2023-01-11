@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.82"
+__version__ = "1.1.9"
 
 import pandas as pd
 import requests
@@ -546,8 +546,17 @@ def _get_climate_ts_month(
         cdss_df  = pd.DataFrame(cdss_df)
         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # convert measDate columns to 'date' and pd datetime type
-        cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
+        # convert string month to have leading 0 if month < 10
+        cdss_df['month_str'] = cdss_df["calMonthNum"]
+
+        # add month w/ leading 0 column
+        cdss_df.loc[(cdss_df['calMonthNum'] < 10), 'month_str'] = "0" + cdss_df["calMonthNum"].astype(str)
+
+        # create datetime column w/ calYear and month_str columns, and convert to pd datetime type
+        cdss_df["datetime"] = pd.to_datetime(cdss_df['calYear'].astype(str) + "-" + cdss_df["month_str"].astype(str) + "-01")
+    
+        # drop month_str column
+        cdss_df = cdss_df.drop('month_str', axis = 1)
 
         # bind data from this page
         data_df = pd.concat([data_df, cdss_df])
@@ -1693,7 +1702,7 @@ def _get_ref_stationflags(
 
     return data_df
 
-def get_structure_divrecday(
+def _get_structure_divrecday(
     wdid          = None,
     wc_identifier = "diversion",
     start_date    = None,
@@ -1753,7 +1762,10 @@ def get_structure_divrecday(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
-        # Loop through pages until last page of data is found, binding each responce dataframe together
+
+    print(f'Retrieving daily structure {wc_identifier} data')
+
+    # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -1793,7 +1805,7 @@ def get_structure_divrecday(
     return data_df
 
 
-def get_structure_divrecmonth(
+def _get_structure_divrecmonth(
     wdid          = None,
     wc_identifier = "diversion",
     start_date    = None,
@@ -1853,6 +1865,8 @@ def get_structure_divrecmonth(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
+    print(f'Retrieving monthly structure {wc_identifier} data')
+
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
@@ -1892,7 +1906,7 @@ def get_structure_divrecmonth(
 
     return data_df
 
-def get_structure_divrecyear(
+def _get_structure_divrecyear(
     wdid          = None,
     wc_identifier = "diversion",
     start_date    = None,
@@ -1953,6 +1967,8 @@ def get_structure_divrecyear(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
+    print(f'Retrieving yearly structure {wc_identifier} data')
+
     # Loop through pages until last page of data is found, binding each responce dataframe together
     while more_pages == True:
 
@@ -1992,15 +2008,99 @@ def get_structure_divrecyear(
     
     return data_df
 
-def get_structure_stage(
+def get_structure_divrec_ts(
+    wdid          = None,
+    wc_identifier = "diversion",
+    start_date    = None,
+    end_date      = None,
+    timescale     = None, 
+    api_key       = None
+    ):
+
+    """Return diversion/releases record data for administrative structures
+
+    Make a request to the CDSS API /structures/divrec endpoints to get diversion/releases time series data for administrative structures by wdid, within a given date range (start and end dates) and at a specified temporal resolution.     
+
+    Args:
+        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        timescale (str, optional): timestep of the time series data to return, either "day", "month", or "year". Defaults to None and will request daily time series.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of structure diversion/releases time series data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [wdid, wc_identifier]):
+        raise TypeError("Invalid 'wdid' or 'wc_identifier' parameters")
+
+    # lists of valid timesteps
+    day_lst       = ['day', 'days', 'daily', 'd']
+    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+    year_lst      = ['year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+    timescale_lst = day_lst + month_lst + year_lst
+
+    # if timescale is None, then defaults to "day"
+    if timescale is None: 
+        timescale = "day"
+        
+    # if parameter is NOT in list of valid parameters
+    if timescale not in timescale_lst:
+        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
+
+    # request daily structure divrec time series data
+    if timescale in day_lst:    
+        divrec_df = _get_structure_divrecday(
+            wdid          = wdid,
+            wc_identifier = wc_identifier,
+            start_date    = start_date,
+            end_date      = end_date,
+            api_key       = api_key
+            )
+
+        # return daily climate time series data
+        return divrec_df
+
+    # request monthly structure divrec time series data
+    if timescale in month_lst:    
+
+        divrec_df = _get_structure_divrecmonth(
+            wdid          = wdid,
+            wc_identifier = wc_identifier,
+            start_date    = start_date,
+            end_date      = end_date,
+            api_key       = api_key
+            )
+
+        # return monthly structure divrec time series data  
+        return divrec_df
+
+    # request yearly structure divrec time series data
+    if timescale in year_lst:    
+
+        divrec_df = _get_structure_divrecyear(
+            wdid          = wdid,
+            wc_identifier = wc_identifier,
+            start_date    = start_date,
+            end_date      = end_date,
+            api_key       = api_key
+            )
+
+        # return yearly structure divrec time series data
+        return divrec_df
+
+def get_structure_stage_ts(
     wdid          = None,
     start_date    = None,
     end_date      = None,
     api_key       = None
     ):
-    """Return Structure stage/volume Records
+    """Return stage/volume record data for administrative structures
 
-    Make a request to the api/v2/structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
+    Make a request to the structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
@@ -2336,7 +2436,7 @@ def get_sw_stations(
 
     return data_df
 
-def get_sw_ts_day(
+def _get_sw_ts_day(
     abbrev              = None,
     station_number      = None,
     usgs_id             = None,
@@ -2346,7 +2446,7 @@ def get_sw_ts_day(
     ):
     """Return daily surface water time series data
     
-    Make a request to the /surfacewater/surfacewatertsday endpoint to retrieve surface water stations daily timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+    Make a request to the /surfacewater/surfacewatertsday endpoint to retrieve surface water stations daily time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
     
     Args:
         station_number (str, optional):  climate data station number. Defaults to None.
@@ -2406,7 +2506,7 @@ def get_sw_ts_day(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    print("Retrieving daily surface water time series...")
+    print("Retrieving daily surface water time series")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2451,7 +2551,7 @@ def get_sw_ts_day(
     
     return data_df
 
-def get_sw_ts_month(
+def _get_sw_ts_month(
     abbrev              = None,
     station_number      = None,
     usgs_id             = None,
@@ -2461,7 +2561,7 @@ def get_sw_ts_month(
     ):
     """Return monthly surface water time series data
     
-    Make a request to the /surfacewater/surfacewatertsmonth endpoint to retrieve surface water stations monthly timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+    Make a request to the /surfacewater/surfacewatertsmonth endpoint to retrieve surface water stations monthly time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
     
     Args:
         station_number (str, optional):  climate data station number. Defaults to None.
@@ -2521,7 +2621,7 @@ def get_sw_ts_month(
     # Loop through pages until there are no more pages to get
     more_pages = True 
     
-    print("Retrieving monthly surface water time series...")
+    print("Retrieving monthly surface water time series")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2563,7 +2663,7 @@ def get_sw_ts_month(
     
     return data_df
 
-def get_sw_ts_wyear(
+def _get_sw_ts_wyear(
     abbrev              = None,
     station_number      = None,
     usgs_id             = None,
@@ -2573,7 +2673,7 @@ def get_sw_ts_wyear(
     ):
     """Return water year surface water time series data
 
-    Make a request to the /surfacewater/surfacewatertswateryear endpoint to retrieve surface water stations annual timeseries data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+    Make a request to the /surfacewater/surfacewatertswateryear endpoint to retrieve surface water stations annual time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
 
     Args:
         station_number (str, optional):  climate data station number. Defaults to None.
@@ -2633,7 +2733,7 @@ def get_sw_ts_wyear(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving water year surface water time series...")
+    print("Retrieving water year surface water time series")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2674,6 +2774,96 @@ def get_sw_ts_wyear(
             page_index += 1
     
     return data_df
+
+def get_sw_ts(
+    abbrev              = None,
+    station_number      = None,
+    usgs_id             = None,
+    start_date          = None,
+    end_date            = None,
+    timescale           = None,
+    api_key             = None
+    ):
+
+    """Return surface water time series data
+    
+    Make a request to the /surfacewater/surfacewaterts/ endpoints (surfacewatertsday, surfacewatertsmonth, surfacewatertswateryear) to retrieve surface water station time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates) and at a specified temporal resolution.     
+    
+    Args:
+        station_number (str, optional):  climate data station number. Defaults to None.
+        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+        station_number (int, str, optional):  surface water station number. Defaults to None.
+        usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+        timescale (str, optional): timestep of the time series data to return, either "day", "month", or "water_year". Defaults to None and will request daily time series.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of surface water station time series data
+    """
+
+    # If all inputs are None, then return error message
+    if all(i is None for i in [abbrev, station_number, usgs_id]):
+        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+
+    # lists of valid timesteps
+    day_lst       = ['day', 'days', 'daily', 'd']
+    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+    year_lst      = ['wyear', 'water_year', 'wyears', 'water_years', 'wy', 'year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+    timescale_lst = day_lst + month_lst + year_lst
+
+    # if timescale is None, then defaults to "day"
+    if timescale is None: 
+        timescale = "day"
+        
+    # if parameter is NOT in list of valid parameters
+    if timescale not in timescale_lst:
+        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
+
+    # request daily surface water time series data
+    if timescale in day_lst:    
+        sw_df = _get_sw_ts_day(
+            abbrev              = abbrev,
+            station_number      = station_number,
+            usgs_id             = usgs_id,
+            start_date          = start_date,
+            end_date            = end_date,
+            api_key             = api_key
+            )
+
+        # return daily surface water time series data
+        return sw_df
+
+    # request monthly surface water time series data
+    if timescale in month_lst:    
+
+        sw_df = _get_sw_ts_month(
+            abbrev              = abbrev,
+            station_number      = station_number,
+            usgs_id             = usgs_id,
+            start_date          = start_date,
+            end_date            = end_date,
+            api_key             = api_key
+            )
+
+        # return monthly surface water time series data
+        return sw_df
+
+    # request yearly surface water time series data
+    if timescale in year_lst:    
+
+        sw_df = _get_sw_ts_wyear(
+            abbrev              = abbrev,
+            station_number      = station_number,
+            usgs_id             = usgs_id,
+            start_date          = start_date,
+            end_date            = end_date,
+            api_key             = api_key
+            )
+
+        # return yearly surface water time series data
+        return sw_df
 
 def get_telemetry_stations(
     aoi            = None,
@@ -2810,7 +3000,7 @@ def get_telemetry_ts(
     ):
     """Return Telemetry station time series data
 
-    Make a request to the /telemetrystations/telemetrytimeseries endpoint to retrieve raw, hourly, or daily telemetry station timeseries data by station abbreviations, within a given date range (start and end dates).
+    Make a request to the /telemetrystations/telemetrytimeseries endpoint to retrieve raw, hourly, or daily telemetry station time series data by station abbreviations, within a given date range (start and end dates).
 
     Args:
         abbrev (str, optional): Station abbreviation. Defaults to None.
