@@ -234,7 +234,7 @@ structures = cdsspy.get_structures(
 ditch_wdids = structures[(structures["ciuCode"] == "A") & (structures["structureType"] == "DITCH")]
 ditch_wdids = list(ditch_wdids['wdid'])
 
-# 3. Providing the WDID's as a list to **`get_structures_divrec()`** 
+# 3. Providing the WDID's as a list to get_structures_divrec()
 diversion_rec  = cdsspy.get_structures_divrec(
     wdid           = ditch_wdids,
     wc_identifier  = "diversion",
