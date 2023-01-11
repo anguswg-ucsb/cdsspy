@@ -216,11 +216,12 @@ discharge_ts   = cdsspy.get_telemetry_ts(
 <br>
 
 #### **Example: Retrieve Diversion records for multiple structures**
-Some of the CDSS API endpoints allow users to request data from multiple structures. To do this, we can get a list of relevent WDIDs by:
+Some of the CDSS API endpoints allow users to request data from multiple structures if you provide a list of IDs. If we want to get diversion data from multiple structure locations, we'll need to get a list of WDIDs. We can get a list WDIDs within a given area by:  
 
-1. Executing a spatial search
-2. Selecting the WDID's of interest from our search results
-3. Providing the WDID's as a vector to **`get_structures_divrec()`** 
+
+1. Executing a spatial search using **`get_structures()`** 
+2. Selecting the WDIDs of interest from the search results
+3. Providing the WDIDs as a vector to **`get_structures_divrec_ts()`** 
 
 
 ```python 
@@ -234,7 +235,7 @@ structures = cdsspy.get_structures(
 ditch_wdids = structures[(structures["ciuCode"] == "A") & (structures["structureType"] == "DITCH")]
 ditch_wdids = list(ditch_wdids['wdid'])
 
-# 3. Providing the WDID's as a list to get_structures_divrec()
+# 3. Providing the WDID's as a list to get_structures_divrec_ts()
 diversion_rec  = cdsspy.get_structures_divrec_ts(
     wdid           = ditch_wdids,
     wc_identifier  = "diversion",
