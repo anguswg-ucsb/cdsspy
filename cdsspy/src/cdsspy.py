@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.81"
+__version__ = "1.1.82"
 
 import pandas as pd
 import requests
@@ -102,8 +102,7 @@ def get_admin_calls(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -214,8 +213,7 @@ def get_climate_stations(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -313,8 +311,7 @@ def get_climate_frostdates(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -427,8 +424,7 @@ def _get_climate_ts_day(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -542,8 +538,7 @@ def _get_climate_ts_month(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -721,8 +716,7 @@ def get_gw_wl_wells(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -815,8 +809,7 @@ def get_gw_wl_wellmeasures(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -919,8 +912,7 @@ def get_gw_gplogs_wells(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -996,8 +988,7 @@ def get_gw_gplogs_geologpicks(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1150,8 +1141,7 @@ def _get_ref_county(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1221,8 +1211,7 @@ def _get_ref_waterdistricts(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1289,8 +1278,7 @@ def _get_ref_waterdivisions(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1356,8 +1344,7 @@ def _get_ref_managementdistricts(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1423,8 +1410,7 @@ def _get_ref_designatedbasins(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1490,8 +1476,7 @@ def _get_ref_telemetry_params(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1557,8 +1542,7 @@ def _get_ref_climate_params(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1624,8 +1608,7 @@ def _get_ref_divrectypes(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1691,8 +1674,7 @@ def _get_ref_stationflags(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1791,8 +1773,7 @@ def get_structure_divrecday(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1892,8 +1873,7 @@ def get_structure_divrecmonth(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -1993,8 +1973,7 @@ def get_structure_divrecyear(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2091,8 +2070,7 @@ def get_structure_stage(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2208,8 +2186,7 @@ def get_structures(
         
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2334,8 +2311,7 @@ def get_sw_stations(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2453,8 +2429,7 @@ def get_sw_ts_day(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2569,8 +2544,7 @@ def get_sw_ts_month(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2682,8 +2656,7 @@ def get_sw_ts_wyear(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2801,8 +2774,7 @@ def get_telemetry_stations(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -2920,8 +2892,7 @@ def get_telemetry_ts(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -3032,8 +3003,7 @@ def get_water_rights_netamount(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -3141,8 +3111,7 @@ def get_water_rights_trans(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -3248,8 +3217,7 @@ def get_call_analysis_wdid(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -3328,8 +3296,7 @@ def get_source_route_framework(
 
         # make API call w/ error handling
         cdss_req = _get_error_handler(
-            url     = url,
-            timeout = 4
+            url     = url
             )
 
         # extract dataframe from list column
@@ -3408,8 +3375,7 @@ def _collapse_vector(
     return vect
 
 def _get_error_handler(
-    url     = None, 
-    timeout = 4
+    url     = None
     ):
 
     """
@@ -3417,7 +3383,6 @@ def _get_error_handler(
 
     Args:
         url (str, optional): URL of the request
-        timeout (int, optional): Timeout period for the request. Default is 4.
     
     Returns:
         requests.models.Response: returns results of attempted get request   
@@ -3427,17 +3392,16 @@ def _get_error_handler(
     if(url is None):
         raise Exception('Please provide a URL to perform a get request')
     
-    # IF NO timeout is given, set timeout to 4
-    if(timeout is None):
-        timeout = 4
-
     # make API call
     try:
-        req_attempt = requests.get(url, timeout = timeout)
+        # attempt GET request
+        req_attempt = requests.get(url)
+
         req_attempt.raise_for_status()
 
         # return successful response
         return req_attempt
+
     except requests.exceptions.HTTPError as errh:
         print("HTTP Error:\n", errh)
         print("\nClient response:\n", errh.response.text)
