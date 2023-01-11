@@ -1,4 +1,4 @@
-# **cdsspy** 
+# **cdsspy** <img src="https://cdsspy-images.s3.us-west-1.amazonaws.com/co_dnr_div_cdss_cwcbdwr_transparent.png" align="right" width="25%" />
 
 <!-- badges: start -->
 
