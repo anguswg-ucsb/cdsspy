@@ -158,7 +158,7 @@ stations  = cdsspy.get_telemetry_stations(
 <br>
 
 ### **Example: Locating telemetry stations within a spatial extent**
-A masking operation is performed when a location search is done using a **polygon**. This ensures that the function only returns points that are *within* the given polygon. 
+A masking operation is performed when a location search is done using a **polygon**. This ensures that the function only returns points that are ***within*** the given polygon. 
 
 ```python
 # identify telemetry stations 15 miles around the centroid of a polygon
@@ -168,7 +168,7 @@ stations  = cdsspy.get_telemetry_stations(
     )
 ```
 
-The gif below highlights the masking process that is done when a polygon is used as the input for conducting a location search. 
+This gif highlights the masking process that happens when the **`aoi`** argument is given a **polygon** 
 
 ![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly2.gif)
 

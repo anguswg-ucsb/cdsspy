@@ -1,7 +1,7 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.1.6
-Summary: Python package for accessing CDSS API web services
+Version: 1.1.7
+Summary: Provides Python functions for discovering and requesting data from the CDSS REST API.
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
 Classifier: License :: OSI Approved :: MIT License
@@ -39,24 +39,24 @@ Thank you to those at CWCB and DWR for providing an accessible and well document
 
 <br>
 
-> See [**`cdssr`**](https://github.com/anguswg-ucsb/cdssr), for the R version of this package
+> See [**`cdssr`**](https://github.com/anguswg-ucsb/cdssr), for the **R** version of this package
 
 ---
 
-- [**cdssr GitHub (R)**](https://github.com/anguswg-ucsb/cdssr)
+- [**cdssr (R)**](https://github.com/anguswg-ucsb/cdssr)
 
 - [**cdssr documentation**](https://anguswg-ucsb.github.io/cdssr/)
 
-- [**cdsspy GitHub (Python)**](https://github.com/anguswg-ucsb/cdsspy)
+- [**cdsspy (Python)**](https://github.com/anguswg-ucsb/cdsspy)
 
-- [**cdsspy PyPI**](https://pypi.org/project/cdsspy/)
+- [**cdsspy documentation**](https://pypi.org/project/cdsspy/)
 
 ---
 
 <br> 
 
 ## **Installation**
-Install the latest version of `cdsspy` from PyPI:
+Install the latest version of **`cdsspy`** from [PyPI](https://pypi.org/project/cdsspy/):
 
 ``` 
 pip install cdsspy
@@ -170,7 +170,7 @@ stations  = cdsspy.get_telemetry_stations(
 <br>
 
 ### **Example: Locating telemetry stations within a spatial extent**
-A masking operation is performed when a location search is done using a **polygon**. This ensures that the function only returns points that are *within* the given polygon. 
+A masking operation is performed when a location search is done using a **polygon**. This ensures that the function only returns points that are ***within*** the given polygon. 
 
 ```python
 # identify telemetry stations 15 miles around the centroid of a polygon
@@ -180,9 +180,9 @@ stations  = cdsspy.get_telemetry_stations(
     )
 ```
 
-The gif below highlights the masking process that is done when a polygon is used as the input for conducting a location search. 
+This gif highlights the masking process that happens when the **`aoi`** argument is given a **polygon** 
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly.gif)
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly2.gif)
 
 <br>
 <br>
@@ -284,4 +284,5 @@ well_measure = cdsspy.get_gw_wl_wellmeasures(
     end_date   = "2022-01-01"
     )
 ```
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot.png)
+
+![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot2.png)
