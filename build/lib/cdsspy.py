@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.91"
+__version__ = "1.1.92"
 
 import pandas as pd
 import requests
