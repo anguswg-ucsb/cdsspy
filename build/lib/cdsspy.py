@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.92"
+__version__ = "1.1.93"
 
 import pandas as pd
 import requests
@@ -188,7 +188,7 @@ def get_climate_stations(
 
     print("Retrieving climate station data")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -292,7 +292,7 @@ def get_climate_frostdates(
 
     print("Retrieving climate station frost dates data")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -401,9 +401,9 @@ def _get_climate_ts_day(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    print("Retrieving climate station daily time series data")
+    print(f"Retrieving daily climate time series data ({param})")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -515,9 +515,9 @@ def _get_climate_ts_month(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving climate station monthly time series data")
+    print(f"Retrieving monthly climate time series data ({param})")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -1765,7 +1765,7 @@ def _get_structure_divrecday(
 
     print(f'Retrieving daily structure {wc_identifier} data')
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -1867,7 +1867,7 @@ def _get_structure_divrecmonth(
 
     print(f'Retrieving monthly structure {wc_identifier} data')
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -1969,7 +1969,7 @@ def _get_structure_divrecyear(
 
     print(f'Retrieving yearly structure {wc_identifier} data')
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -2151,7 +2151,7 @@ def get_structure_stage_ts(
     # Loop through pages until there are no more pages to get
     more_pages = True
     
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -2261,7 +2261,7 @@ def get_structures(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -2385,7 +2385,7 @@ def get_sw_stations(
 
     print("Retrieving surface water station data")
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
 
         # create query URL string
@@ -2810,7 +2810,7 @@ def get_sw_ts(
     # lists of valid timesteps
     day_lst       = ['day', 'days', 'daily', 'd']
     month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
-    year_lst      = ['wyear', 'water_year', 'wyears', 'water_years', 'wy', 'year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+    year_lst      = ['wyear', 'water_year', 'wyears', 'water_years', 'wateryear', 'wateryears', 'wy', 'year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
     timescale_lst = day_lst + month_lst + year_lst
 
     # if timescale is None, then defaults to "day"
@@ -3058,10 +3058,11 @@ def get_telemetry_ts(
 
     # Loop through pages until there are no more pages to get
     more_pages = True
-    
-    print("Retrieving telemetry station time series data\nTimescale:", timescale)
 
-    # Loop through pages until last page of data is found, binding each responce dataframe together
+    print(f"Retrieving telemetry station time series data ({timescale} - {parameter})")
+
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
         
         # create query URL string
