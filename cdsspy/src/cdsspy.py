@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.93"
+__version__ = "1.1.94"
 
 import pandas as pd
 import requests
@@ -33,9 +33,23 @@ def get_admin_calls(
     Returns:
         pandas dataframe object: dataframe of active/historical administrative calls data
     """
-    # If all inputs are None, then return error message
-    if all(i is None for i in [division, location_wdid, call_number]):
-        raise TypeError("Invalid 'division', 'location_wdid', or 'call_number' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [division, location_wdid, call_number]):
+    #     raise TypeError("Invalid 'division', 'location_wdid', or 'call_number' parameters")
+    
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date", "active"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
     
     # collapse location_wdid list, tuple, vector of site_id into query formatted string
     location_wdid = _collapse_vector(
@@ -150,10 +164,24 @@ def get_climate_stations(
         pandas dataframe object: dataframe of climate station data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, county, division, station_name, site_id, water_district]):
-        raise TypeError("Invalid 'aoi', 'county', 'division', 'station_name', 'site_id', or 'water_district' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, county, division, station_name, site_id, water_district]):
+    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'station_name', 'site_id', or 'water_district' parameters")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
     aoi_lst = _check_aoi(
         aoi    = aoi,
@@ -257,10 +285,24 @@ def get_climate_frostdates(
     Returns:
         pandas dataframe object: dataframe of climate station frost dates data
     """
-    # If all inputs are None, then return error message
-    if all(i is None for i in [station_number]):
-        raise TypeError("Invalid 'station_number' parameter")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [station_number]):
+    #     raise TypeError("Invalid 'station_number' parameter")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = any
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
     
@@ -362,9 +404,23 @@ def _get_climate_ts_day(
     if param not in param_lst:
         raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [site_id, station_number]):
-        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [site_id, station_number]):
+    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_dict)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
@@ -476,10 +532,24 @@ def _get_climate_ts_month(
     if param not in param_lst:
         raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [site_id, station_number]):
-        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [site_id, station_number]):
+    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
 
@@ -596,9 +666,23 @@ def get_climate_ts(
         pandas dataframe object: dataframe of climate station time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [site_id, station_number]):
-        raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [site_id, station_number]):
+    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore  = ["api_key", "start_date", "end_date", "timescale"],
+        f       = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     # lists of valid timesteps
     day_lst       = ['day', 'days', 'daily', 'd']
@@ -668,9 +752,23 @@ def get_gw_wl_wells(
         pandas dataframe object: dataframe of groundwater water level wells
     """
     # If all inputs are None, then return error message
-    if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
-        raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
+    # if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
+        # raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore  = ["api_key"],
+        f       = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wells/?"
 
@@ -764,9 +862,23 @@ def get_gw_wl_wellmeasures(
         pandas dataframe object: dataframe of groundwater well measurements
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [wellid]):
-        raise TypeError("Invalid 'wellid' parameter")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [wellid]):
+    #     raise TypeError("Invalid 'wellid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wellmeasurements/?"
@@ -864,9 +976,23 @@ def get_gw_gplogs_wells(
     """
 
     # If all inputs are None, then return error message
-    if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
-        raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
+    # if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
+        # raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/wells/?"
 
@@ -955,9 +1081,23 @@ def get_gw_gplogs_geologpicks(
     Returns:
         pandas dataframe object: dataframe of groundwater geophysical log picks
     """
-    # If all inputs are None, then return error message
-    if all(i is None for i in [wellid]):
-        raise TypeError("Invalid 'wellid' parameter")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [wellid]):
+    #     raise TypeError("Invalid 'wellid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/geoplogpicks/?"
@@ -1724,9 +1864,23 @@ def _get_structure_divrecday(
         pandas dataframe object: dataframe of daily structure diversion/releases records 
     """
 
-    # if no wdid is given, return error
-    if wdid is None:
-        raise TypeError("Invalid 'wdid' parameter")
+    # # if no wdid is given, return error
+    # if wdid is None:
+    #     raise TypeError("Invalid 'wdid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
@@ -1826,9 +1980,23 @@ def _get_structure_divrecmonth(
     Returns:
         pandas dataframe object: dataframe of monthly structure diversion/releases records 
     """
-    # if no wdid is given, return error
-    if wdid is None:
-        raise TypeError("Invalid 'wdid' parameter")
+    # # if no wdid is given, return error
+    # if wdid is None:
+    #     raise TypeError("Invalid 'wdid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
     
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
@@ -1915,7 +2083,7 @@ def _get_structure_divrecyear(
     ):
     """Return Structure Annual Diversion/Release Records
 
-    Make a request to the api/v2/structures/divrec/divrecyear/ endpoint to retrieve annual structure diversion/release data for a specified WDID within a specified date range.
+    Make a request to the structures/divrec/divrecyear/ endpoint to retrieve annual structure diversion/release data for a specified WDID within a specified date range.
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
@@ -1928,9 +2096,23 @@ def _get_structure_divrecyear(
         pandas dataframe object: dataframe of annual structure diversion/releases records 
     """
 
-    # if no wdid is given, return error
-    if wdid is None:
-        raise TypeError("Invalid 'wdid' parameter")
+    # # if no wdid is given, return error
+    # if wdid is None:
+    #     raise TypeError("Invalid 'wdid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
     
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
@@ -2033,9 +2215,23 @@ def get_structure_divrec_ts(
         pandas dataframe object: dataframe of structure diversion/releases time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [wdid, wc_identifier]):
-        raise TypeError("Invalid 'wdid' or 'wc_identifier' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [wdid, wc_identifier]):
+    #     raise TypeError("Invalid 'wdid' or 'wc_identifier' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "wc_identifier", "start_date", "end_date", "timescale"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     # lists of valid timesteps
     day_lst       = ['day', 'days', 'daily', 'd']
@@ -2112,9 +2308,23 @@ def get_structure_stage_ts(
         pandas dataframe object: dataframe of daily structure stage/volume records 
     """
 
-    # if no abbreviation is given, return error
-    if wdid is None:
-        raise TypeError("Invalid 'wdid' parameter")
+    # # if no abbreviation is given, return error
+    # if wdid is None:
+    #     raise TypeError("Invalid 'wdid' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/stagevolume/?"
@@ -2217,9 +2427,23 @@ def get_structures(
         pandas dataframe object: dataframe of administrative structures
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, county, division, gnis_id, water_district, wdid]):
-        raise TypeError("Invalid 'aoi', 'county', 'division', 'gnis_id', 'water_district', or 'wdid' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, county, division, gnis_id, water_district, wdid]):
+    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'gnis_id', 'water_district', or 'wdid' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
@@ -2341,9 +2565,23 @@ def get_sw_stations(
         pandas dataframe object: dataframe of surface water station data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, abbrev, county, division, station_name, usgs_id, water_district]):
-        raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'station_name', 'usgs_id', or 'water_district' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, abbrev, county, division, station_name, usgs_id, water_district]):
+    #     raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'station_name', 'usgs_id', or 'water_district' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
     aoi_lst = _check_aoi(
@@ -2461,9 +2699,23 @@ def _get_sw_ts_day(
         pandas dataframe object: daily surface water time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [abbrev, station_number, usgs_id]):
-        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [abbrev, station_number, usgs_id]):
+    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/?"
@@ -2576,9 +2828,23 @@ def _get_sw_ts_month(
         pandas dataframe object: monthly surface water time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [abbrev, station_number, usgs_id]):
-        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [abbrev, station_number, usgs_id]):
+    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsmonth/?"
@@ -2688,9 +2954,23 @@ def _get_sw_ts_wyear(
         pandas dataframe object: annual surface water time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [abbrev, station_number, usgs_id]):
-        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [abbrev, station_number, usgs_id]):
+    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertswateryear/?"
@@ -2803,10 +3083,24 @@ def get_sw_ts(
         pandas dataframe object: dataframe of surface water station time series data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [abbrev, station_number, usgs_id]):
-        raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [abbrev, station_number, usgs_id]):
+    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date", "timescale"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     # lists of valid timesteps
     day_lst       = ['day', 'days', 'daily', 'd']
     month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
@@ -2898,9 +3192,23 @@ def get_telemetry_stations(
         pandas dataframe object: dataframe of telemetry station data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, abbrev, county, division, gnis_id, usgs_id, water_district, wdid]):
-        raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'gnis_id', 'usgs_id', 'water_district', or 'wdid' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, abbrev, county, division, gnis_id, usgs_id, water_district, wdid]):
+    #     raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'gnis_id', 'usgs_id', 'water_district', or 'wdid' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     # base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
@@ -3015,9 +3323,23 @@ def get_telemetry_ts(
         pandas dataframe object: dataframe of telemetry station time series data
     """
 
-    # if no abbreviation is given, return error
-    if abbrev is None:
-        raise TypeError("Invalid 'abbrev' parameter")
+    # # if no abbreviation is given, return error
+    # if abbrev is None:
+    #     raise TypeError("Invalid 'abbrev' parameter")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "parameter", "start_date", "end_date", "timescale"],
+        f        = any
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
@@ -3138,9 +3460,23 @@ def get_water_rights_netamount(
         pandas dataframe object: dataframe of water rights net amounts data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, county, division, water_district, wdid]):
-        raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, county, division, water_district, wdid]):
+    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
@@ -3246,9 +3582,23 @@ def get_water_rights_trans(
         pandas dataframe object: dataframe of water rights transactions data
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [aoi, county, division, water_district, wdid]):
-        raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [aoi, county, division, water_district, wdid]):
+    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/transaction/?"
@@ -3349,10 +3699,24 @@ def get_call_analysis_wdid(
         pandas dataframe object: dataframe of call services by WDID
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [wdid, admin_no]):
-        raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [wdid, admin_no]):
+    #     raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = any
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     # convert int admin_no to str
     if(isinstance(admin_no, (int))):
         admin_no = str(admin_no)
@@ -3447,18 +3811,32 @@ def get_source_route_framework(
         pandas dataframe object: dataframe of source route framework
     """
 
-    # If all inputs are None, then return error message
-    if all(i is None for i in [division, gnis_name, water_district]):
-        raise TypeError("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
+    # # If all inputs are None, then return error message
+    # if all(i is None for i in [division, gnis_name, water_district]):
+    #     raise TypeError("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
+    
+    # list of function inputs
+    input_args = locals()
 
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteframework/?"
     
     # maximum records per page
-    page_size = 50000
+    page_size  = 50000
 
     # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+    data_df    = pd.DataFrame()
 
     # initialize first page index
     page_index = 1
@@ -3506,6 +3884,64 @@ def get_source_route_framework(
 
     return data_df
 
+def _check_args(
+        arg_dict = None, 
+        ignore   = None,
+        f        = any
+        ):
+    """Check all arguments of a function for any/all NULL values
+    
+    Internal function for checking a function arguments for any/all invalid/missing arguments necessary to the function it is called within
+    
+    Args:
+        arg_dict (dict): list of function arguments by calling locals() within a function. Defaults to None.
+        ignore (list, optional):  List of function arguments to ignore None check. Defaults to None.
+        f (built-in function): Built in function "any" or "all" to indicate whether to check for "any" or "all" None argument. 
+            If "any" then if any of the function arguments are None, then an error is thrown.
+            If "all" then all relevant arguments must be None for an error to be thrown. Defaults to any.
+
+    Returns:
+        string: error statement with any/all None arguments listed, or None if no error is thrown by None values
+    """
+
+    # if no function arguments are given, throw an error
+    if arg_dict is None:
+        raise Exception("provide a list of function arguments by calling 'locals()', within another function")
+
+    # argument dictionary key/values as lists
+    key_lst  = list(arg_dict.keys())
+    val_lst  = list(arg_dict.values())
+
+    # if certain arguments are specifically supposed to be ignored
+    if ignore is not None:
+        
+        # remove specifically ignorged arguments
+        ignored_lst = [i for i, x in enumerate(key_lst) if x not in ignore]
+
+        # keys and values of arguments to keep
+        key_args        = [key_lst[i] for i in ignored_lst]
+        val_args        = [val_lst[i] for i in ignored_lst]
+    else:
+        
+        # if no arguments are ignored, keep all argument key/values
+        key_args        = key_lst
+        val_args        = val_lst
+
+    # if any/all arguments are None, return an error statement. Otherwise return None if None check is passed
+    if(f(i is None for i in val_args)):
+        # check where in remaining arguments the value is None, and get the index of missing arguments
+        idx_miss = [i for i in range(len(val_args)) if val_args[i] == None]
+
+        # return the argument names of None arguments
+        key_miss = ", ".join(["'"+key_lst[i]+"'" for i in idx_miss])
+
+        # error print statement
+        err_msg = "Invalid or missing " + key_miss + " arguments"
+
+        return err_msg
+    else:
+        return None
+    
 def _parse_date(
     date   = None,
     start  = True,
