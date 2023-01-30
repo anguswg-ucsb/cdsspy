@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.00"
+__version__ = "1.2.1"
 
 import pandas as pd
 import requests
@@ -3838,6 +3838,11 @@ def get_call_analysis_wdid(
             arg_dict = input_args,
             ignore   = None
             )
+        
+        # # make API call w/ error handling
+        # cdss_req = _get_error_handler(
+        #     url      = url
+        #     )
 
         # extract dataframe from list column
         cdss_df = cdss_req.json()
@@ -4067,14 +4072,52 @@ def _collapse_vector(
     
     return vect
 
+def _get_error_handler(
+    url      = None
+    ):
+
+    """ Make GET requests and return the responses
+
+    Internal function for making get request and returning unsuccesful response text. 
+    Used within a try, except block within _parse_gets() function.
+
+    Args:
+        url (str, optional): URL of the request
+    
+    Returns:
+        requests.models.Response: returns results of attempted get request   
+    """
+
+    # If NO url is given
+    if(url is None):
+        raise Exception('Please provide a URL to perform a get request')
+    
+    # make API call
+
+    # attempt GET request
+    req_attempt = requests.get(url)
+
+    # if request is 200 (OK), return JSON content data
+    if req_attempt.status_code == 200:
+        # return successful response
+        return req_attempt
+    else:
+        # return req_attempt.text
+        raise Exception(req_attempt.text)
+    
+
 def _parse_gets(
         url      = None, 
         arg_dict = None, 
         ignore   = None
         ):
     
-    """
-    Internal function for making get request and error handling unsuccessful requests
+    """ Makes GET requests and dynamically handle errors 
+
+    Internal function for handling GET requests and associated errors.
+    Function will try to make a GET request, and if an error occurs, the function 
+    will return an error message with relevenant information detailing the error 
+    and the inputs that led to the error.
 
     Args:
         url (str): URL of the request
@@ -4082,24 +4125,26 @@ def _parse_gets(
         ignore (list, optional):  List of function arguments to ignore None check. Defaults to None.
     
     Returns:
-        requests response: returns results of attempted get request   
+        requests response: returns results of attempted get request 
     """
 
     # try to make GET request and error handling unsuccessful requests
     try:
-        req = _parse_gets(url = url)
+        # attempt GET request
+        req = _get_error_handler(url = url)
 
         return(req)
+    
     except Exception as e:
 
         # if an error occurred, use _query_error() to format a helpful error message to user
         raise Exception(_query_error(
-                            arg_dict = arg_dict,
-                            url      = url,
-                            ignore   = ignore,
-                            e_msg    = e
-                            )
-                            )
+            arg_dict = arg_dict,
+            url      = url,
+            ignore   = ignore,
+            e_msg    = e
+            )
+            )
     
 def _query_error(
         arg_dict = None,
@@ -4159,7 +4204,7 @@ def _query_error(
 
     return q_msg
 
-def _get_error_handler(
+def _get_error_handler2(
     url     = None
     ):
 
