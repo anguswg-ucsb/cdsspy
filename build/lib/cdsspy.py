@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.1.94"
+__version__ = "1.2.00"
 
 import pandas as pd
 import requests
@@ -115,10 +115,12 @@ def get_admin_calls(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
-
+        
         # extract dataframe from list column
         cdss_df = cdss_req.json()
         cdss_df = pd.DataFrame(cdss_df)
@@ -240,8 +242,10 @@ def get_climate_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -352,8 +356,10 @@ def get_climate_frostdates(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -479,8 +485,10 @@ def _get_climate_ts_day(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -607,8 +615,10 @@ def _get_climate_ts_month(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -822,8 +832,10 @@ def get_gw_wl_wells(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -929,8 +941,10 @@ def get_gw_wl_wellmeasures(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1046,8 +1060,10 @@ def get_gw_gplogs_wells(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1136,8 +1152,10 @@ def get_gw_gplogs_geologpicks(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1289,8 +1307,10 @@ def _get_ref_county(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1359,8 +1379,10 @@ def _get_ref_waterdistricts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1426,8 +1448,10 @@ def _get_ref_waterdivisions(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1492,8 +1516,10 @@ def _get_ref_managementdistricts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1558,8 +1584,10 @@ def _get_ref_designatedbasins(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1624,8 +1652,10 @@ def _get_ref_telemetry_params(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1690,8 +1720,10 @@ def _get_ref_climate_params(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1756,8 +1788,10 @@ def _get_ref_divrectypes(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1822,8 +1856,10 @@ def _get_ref_stationflags(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -1938,8 +1974,10 @@ def _get_structure_divrecday(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2054,8 +2092,10 @@ def _get_structure_divrecmonth(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2170,8 +2210,10 @@ def _get_structure_divrecyear(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2379,8 +2421,10 @@ def get_structure_stage_ts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2509,8 +2553,10 @@ def get_structures(
             url = url + "&apiKey=" + str(api_key)
         
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2648,8 +2694,10 @@ def get_sw_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2780,8 +2828,10 @@ def _get_sw_ts_day(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -2909,8 +2959,10 @@ def _get_sw_ts_month(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3035,8 +3087,10 @@ def _get_sw_ts_wyear(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3271,8 +3325,10 @@ def get_telemetry_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3404,8 +3460,10 @@ def get_telemetry_ts(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3529,8 +3587,10 @@ def get_water_rights_netamount(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3651,8 +3711,10 @@ def get_water_rights_trans(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3771,8 +3833,10 @@ def get_call_analysis_wdid(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -3864,8 +3928,10 @@ def get_source_route_framework(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = _get_error_handler(
-            url     = url
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
             )
 
         # extract dataframe from list column
@@ -4000,6 +4066,98 @@ def _collapse_vector(
             vect = vect.replace(" ", sep)
     
     return vect
+
+def _parse_gets(
+        url      = None, 
+        arg_dict = None, 
+        ignore   = None
+        ):
+    
+    """
+    Internal function for making get request and error handling unsuccessful requests
+
+    Args:
+        url (str): URL of the request
+        arg_dict (dict): list of function arguments by calling locals() within a function. Defaults to None.
+        ignore (list, optional):  List of function arguments to ignore None check. Defaults to None.
+    
+    Returns:
+        requests response: returns results of attempted get request   
+    """
+
+    # try to make GET request and error handling unsuccessful requests
+    try:
+        req = _parse_gets(url = url)
+
+        return(req)
+    except Exception as e:
+
+        # if an error occurred, use _query_error() to format a helpful error message to user
+        raise Exception(_query_error(
+                            arg_dict = arg_dict,
+                            url      = url,
+                            ignore   = ignore,
+                            e_msg    = e
+                            )
+                            )
+    
+def _query_error(
+        arg_dict = None,
+        url      = None,
+        ignore   = None,
+        e_msg    = None
+        ):
+    """GET Request Error message handler
+
+    Internal function for generating dynamic error messages for failed GET requests.
+    Designed to be called within another function and print out the functions input arguments.
+
+    Args:
+        arg_dict (dict): list of function arguments by calling locals() within a function. Defaults to None.
+        url (str): URL of the request. Defaults to None.
+        ignore (list, optional):  List of function arguments to ignore None check. Defaults to None.
+        e_msg (exception, str): exception message or string message that should be pointed to as the original error message. Defaults to None.
+
+    Returns:
+        str: error message that includes the query inputs that led to the error, the requested URL, and the original error message
+    """
+
+    # if no function arguments are given, throw an error
+    if arg_dict is None:
+        raise Exception("provide a list of function arguments by calling 'locals()', within another function")
+    
+    # argument dictionary key/values as lists
+    key_lst  = list(arg_dict.keys())
+    val_lst  = list(arg_dict.values())
+
+    # if certain arguments are specifically supposed to be ignored
+    if ignore is not None:
+        
+        # remove specifically ignorged arguments
+        ignored_lst = [i for i, x in enumerate(key_lst) if x not in ignore]
+
+        # keys and values of arguments to keep
+        key_args        = [key_lst[i] for i in ignored_lst]
+        val_args        = [val_lst[i] for i in ignored_lst]
+    else:
+        
+        # if no arguments are ignored, keep all argument key/values
+        key_args        = key_lst
+        val_args        = val_lst
+
+    # query_dict = dict(zip(key_args, val_args))
+
+    q_lst = []
+
+    for i in range(len(key_args)):
+            q_lst.append(f'{key_args[i]}: {val_args[i]}')
+
+    q_msg = ("DATA RETRIEVAL ERROR\nQuery:\n" + '\n'.join(q_lst) +
+            "\nRequested URL: " + url + 
+            "\n\n" + "Original error message: " + "\n-----------------------\n\n" + str(e_msg)
+            )
+
+    return q_msg
 
 def _get_error_handler(
     url     = None
