@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.1"
+__version__ = "1.2.2"
 
 import pandas as pd
 import requests
@@ -3358,7 +3358,7 @@ def get_telemetry_ts(
     parameter           = "DISCHRG",
     start_date          = None,
     end_date            = None,
-    timescale           = "day",
+    timescale           = None,
     include_third_party = True,
     api_key             = None
     ):
@@ -3371,17 +3371,13 @@ def get_telemetry_ts(
         parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations.. Defaults to "DISCHRG".
         start_date (str, optional): Date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): Date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to "day".
+        timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to None and will request daily time series.
         include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of telemetry station time series data
     """
-
-    # # if no abbreviation is given, return error
-    # if abbrev is None:
-    #     raise TypeError("Invalid 'abbrev' parameter")
 
     # list of function inputs
     input_args = locals()
@@ -3396,6 +3392,17 @@ def get_telemetry_ts(
     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
     if arg_lst is not None:
         raise Exception(arg_lst)
+    
+    # lists of valid timesteps
+    timescale_lst = ["day", "hour", "raw"]
+
+    # if timescale is None, then defaults to "day"
+    if timescale is None: 
+        timescale = "day"
+        
+    # if parameter is NOT in list of valid parameters
+    if timescale not in timescale_lst:
+        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{timescale_lst}")
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
@@ -3413,14 +3420,6 @@ def get_telemetry_ts(
         start  = False,
         format = "%m-%d-%Y"
         )
-    
-    # Set correct name of date field for querying raw data
-    if timescale == "raw": 
-        # raw date field name
-        date_field = "measDateTime"
-    else:
-        # hour and day date field name
-        date_field = "measDate"
     
     # Create True or False include 3rd party string
     third_party_str = str(include_third_party).lower()
