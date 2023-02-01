@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.2"
+__version__ = "1.2.3"
 
 import pandas as pd
 import requests
@@ -26,7 +26,7 @@ def get_admin_calls(
         location_wdid (str, optional): call location structure WDID to query for administrative calls. Defaults to None.
         call_number (int, str, optional): unique call identifier to query. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         active (bool, optional): whether to get active or historical administrative calls. Defaults to True which returns active administrative calls.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
@@ -3811,7 +3811,7 @@ def get_call_analysis_wdid(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print("Retrieving call anaylsis data by WDID")
+    print("Retrieving call analysis data by WDID")
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -3823,6 +3823,127 @@ def get_call_analysis_wdid(
             f'&endDate={end or ""}'
             f'&startDate={start or ""}'
             f'&wdid={wdid or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call w/ error handling
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
+            )
+        
+        # # make API call w/ error handling
+        # cdss_req = _get_error_handler(
+        #     url      = url
+        #     )
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
+
+def get_call_analysis_gnisid(
+    gnis_id             = None,
+    admin_no            = None,
+    stream_mile         = None,
+    start_date          = None,
+    end_date            = None,
+    api_key             = None
+    ):
+    """Return call analysis by GNIS ID from analysis services API
+    
+    Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
+    This can be used when there is not an existing WDID to be analyzed.
+
+    Args:
+        gnis_id(str): GNIS ID to query. Defaults to None.
+        admin_no (str, int): Water Right Administration Number. Defaults to None.
+        stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
+        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of call services by GNIS ID
+    """
+    
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date"],
+        f        = any
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
+    # convert int admin_no to str
+    if(isinstance(admin_no, (int))):
+        admin_no = str(admin_no)
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbygnisid/?"
+    
+    # parse start_date into query string format
+    start = _parse_date(
+        date   = start_date,
+        start  = True,
+        format = "%m-%d-%Y"
+        )
+
+    # parse end_date into query string format
+    end = _parse_date(
+        date   = end_date,
+        start  = False,
+        format = "%m-%d-%Y"
+        )
+
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving call analysis data by GNIS ID")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&adminNo={admin_no or ""}'
+            f'&endDate={end or ""}'
+            f'&gnisId={gnis_id or ""}'
+            f'&startDate={start or ""}'
+            f'&streamMile={stream_mile or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
 
@@ -3923,6 +4044,99 @@ def get_source_route_framework(
             f'&division={division or ""}'
             f'&gnisName={gnis_name or ""}'
             f'&waterDistrict={water_district or ""}'
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call w/ error handling
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
+            )
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if len(cdss_df.index) < page_size:
+            more_pages = False
+        else:
+            page_index += 1
+
+    return data_df
+
+def get_source_route_analysis(
+    lt_gnis_id          = None,
+    lt_stream_mile      = None,
+    ut_gnis_id          = None,
+    ut_stream_mile      = None,
+    api_key             = None
+    ):
+    """Returns all WDID(s), and their stream mile, located between two different stream locations on the DWR Water Source Framework
+
+    Makes a request to the analysisservices/watersourcerouteanalysis/ endpoint to retrieve the DWR source route framework analysis data.
+    Args:
+        lt_gnis_id (str, int):  lower terminus GNIS ID. Defaults to None.
+        lt_stream_mile (str, int): lower terminus stream mile. Defaults to None.
+        ut_gnis_id (str, int):  upper terminus GNIS ID. Defaults to None.
+        ut_stream_mile (str, int): upper terminus stream mile. Defaults to None.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of water source route framework analysis
+    """
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key"],
+        f        = any
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+    
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteanalysis/?"
+    
+    # maximum records per page
+    page_size  = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df    = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    print("Retrieving DWR source route analysis")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+
+        # create query URL string
+        url = (
+            f'{base}format=json&dateFormat=spaceSepToSeconds'
+            f'&ltGnisId={lt_gnis_id or ""}'
+            f'&ltStreamMile={lt_stream_mile or ""}'
+            f'&utGnisId={ut_gnis_id or ""}'
+            f'&utStreamMile={ut_stream_mile or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
             )
 
