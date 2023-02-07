@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.3"
+__version__ = "1.2.4"
 
 import pandas as pd
 import requests
@@ -3737,7 +3737,6 @@ def get_water_rights_trans(
         )
     
     return data_df
-
 def get_call_analysis_wdid(
     wdid                = None,
     admin_no            = None,
@@ -3759,10 +3758,6 @@ def get_call_analysis_wdid(
     Returns:
         pandas dataframe object: dataframe of call services by WDID
     """
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [wdid, admin_no]):
-    #     raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
     
     # list of function inputs
     input_args = locals()
@@ -3784,80 +3779,99 @@ def get_call_analysis_wdid(
 
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
-    
-    # parse start_date into query string format
-    start = _parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
+
+    # make a list of date ranges to issue GET requests in smaller batches
+    date_lst = _batch_dates(
+        start_date = start_date,
+        end_date   = end_date
         )
 
-    # parse end_date into query string format
-    end = _parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+    # final output dataframe to append query results to
+    out_df = pd.DataFrame()
 
-    # maximum records per page
-    page_size = 50000
-
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
-
-    # initialize first page index
-    page_index = 1
-
-    # Loop through pages until there are no more pages to get
-    more_pages = True
-
+    # print message 
     print("Retrieving call analysis data by WDID")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+    # go through range of dates in date_df and make batch GET requests
+    for idx, val in enumerate(date_lst):
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&adminNo={admin_no or ""}'
-            f'&endDate={end or ""}'
-            f'&startDate={start or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
+        print("index: ", idx, " | value: ", val)
+        # print("START: ", val[0], " | END: ", val[1])
+
+        # parse start_date into query string format
+        start = _parse_date(
+            date   = val[0],
+            start  = True,
+            format = "%m-%d-%Y"
             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
-
-        # make API call w/ error handling
-        cdss_req = _parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
+        # parse end_date into query string format
+        end = _parse_date(
+            date   = val[1],
+            start  = False,
+            format = "%m-%d-%Y"
             )
-        
-        # # make API call w/ error handling
-        # cdss_req = _get_error_handler(
-        #     url      = url
-        #     )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+        # maximum records per page
+        page_size = 50000
+
+        # initialize empty dataframe to store data from multiple pages
+        data_df = pd.DataFrame()
+
+        # initialize first page index
+        page_index = 1
+
+        # Loop through pages until there are no more pages to get
+        more_pages = True
+
+        # Loop through pages until last page of data is found, binding each response dataframe together
+        while more_pages == True:
+
+            # create query URL string
+            url = (
+                f'{base}format=json&dateFormat=spaceSepToSeconds'
+                f'&adminNo={admin_no or ""}'
+                f'&endDate={end or ""}'
+                f'&startDate={start or ""}'
+                f'&wdid={wdid or ""}'
+                f'&pageSize={page_size}&pageIndex={page_index}'
+                )
+
+            # If an API key is provided, add it to query URL
+            if api_key is not None:
+                # Construct query URL w/ API key
+                url = url + "&apiKey=" + str(api_key)
+
+            # make API call w/ error handling
+            cdss_req = _parse_gets(
+                url      = url, 
+                arg_dict = input_args,
+                ignore   = None
+                )
+            
+            # # make API call w/ error handling
+            # cdss_req = _get_error_handler(
+            #     url      = url
+            #     )
+
+            # extract dataframe from list column
+            cdss_df = cdss_req.json()
+            cdss_df = pd.DataFrame(cdss_df)
+            cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+            # bind data from this page
+            data_df = pd.concat([data_df, cdss_df])
+
+            # Check if more pages to get to continue/stop while loop
+            if len(cdss_df.index) < page_size:
+                more_pages = False
+            else:
+                page_index += 1
 
         # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+        out_df = pd.concat([out_df, data_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
-
-    return data_df
+    return out_df
 
 def get_call_analysis_gnisid(
     gnis_id             = None,
@@ -3902,83 +3916,336 @@ def get_call_analysis_gnisid(
     if(isinstance(admin_no, (int))):
         admin_no = str(admin_no)
 
-    #  base API URL
+    # base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbygnisid/?"
+
+    # make a list of date ranges to issue GET requests in smaller batches
+    date_lst = _batch_dates(
+        start_date = start_date,
+        end_date   = end_date
+        )
     
-    # parse start_date into query string format
-    start = _parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-        )
+    # final output dataframe to append query results to
+    out_df = pd.DataFrame()
 
-    # parse end_date into query string format
-    end = _parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
-
-    # maximum records per page
-    page_size = 50000
-
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
-
-    # initialize first page index
-    page_index = 1
-
-    # Loop through pages until there are no more pages to get
-    more_pages = True
-
+    # print message 
     print("Retrieving call analysis data by GNIS ID")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+    # go through range of dates in date_df and make batch GET requests
+    for idx, val in enumerate(date_lst):
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&adminNo={admin_no or ""}'
-            f'&endDate={end or ""}'
-            f'&gnisId={gnis_id or ""}'
-            f'&startDate={start or ""}'
-            f'&streamMile={stream_mile or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
+        # parse start_date into query string format
+        start = _parse_date(
+            date   = val[0],
+            start  = True,
+            format = "%m-%d-%Y"
             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
-
-        # make API call w/ error handling
-        cdss_req = _parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
+        # parse end_date into query string format
+        end = _parse_date(
+            date   = val[1],
+            start  = False,
+            format = "%m-%d-%Y"
             )
+
+        # maximum records per page
+        page_size = 50000
+
+        # initialize empty dataframe to store data from multiple pages
+        data_df = pd.DataFrame()
+
+        # initialize first page index
+        page_index = 1
+
+        # Loop through pages until there are no more pages to get
+        more_pages = True
         
-        # # make API call w/ error handling
-        # cdss_req = _get_error_handler(
-        #     url      = url
-        #     )
+        # Loop through pages until last page of data is found, binding each response dataframe together
+        while more_pages == True:
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+            # create query URL string
+            url = (
+                f'{base}format=json&dateFormat=spaceSepToSeconds'
+                f'&adminNo={admin_no or ""}'
+                f'&endDate={end or ""}'
+                f'&gnisId={gnis_id or ""}'
+                f'&startDate={start or ""}'
+                f'&streamMile={stream_mile or ""}'
+                f'&pageSize={page_size}&pageIndex={page_index}'
+                )
+
+            # If an API key is provided, add it to query URL
+            if api_key is not None:
+                # Construct query URL w/ API key
+                url = url + "&apiKey=" + str(api_key)
+
+            # make API call w/ error handling
+            cdss_req = _parse_gets(
+                url      = url, 
+                arg_dict = input_args,
+                ignore   = None
+                )
+
+            # extract dataframe from list column
+            cdss_df = cdss_req.json()
+            cdss_df = pd.DataFrame(cdss_df)
+            cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+            # bind data from this page
+            data_df = pd.concat([data_df, cdss_df])
+
+            # Check if more pages to get to continue/stop while loop
+            if len(cdss_df.index) < page_size:
+                more_pages = False
+            else:
+                page_index += 1
 
         # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+        out_df = pd.concat([out_df, data_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+    return out_df
 
-    return data_df
+# def get_call_analysis_wdid(
+#     wdid                = None,
+#     admin_no            = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return call analysis by WDID from analysis services API
+    
+#     Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
+    
+#     Args:
+#         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
+#         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+#     Returns:
+#         pandas dataframe object: dataframe of call services by WDID
+#     """
+
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [wdid, admin_no]):
+#     #     raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+    
+#     # list of function inputs
+#     input_args = locals()
+
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = _check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
+    
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
+    
+#     # convert int admin_no to str
+#     if(isinstance(admin_no, (int))):
+#         admin_no = str(admin_no)
+
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
+    
+#     # parse start_date into query string format
+#     start = _parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#         )
+
+#     # parse end_date into query string format
+#     end = _parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
+
+#     # maximum records per page
+#     page_size = 50000
+
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
+
+#     # initialize first page index
+#     page_index = 1
+
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
+
+#     print("Retrieving call analysis data by WDID")
+
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
+
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&adminNo={admin_no or ""}'
+#             f'&endDate={end or ""}'
+#             f'&startDate={start or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
+
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
+
+#         # make API call w/ error handling
+#         cdss_req = _parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
+        
+#         # # make API call w/ error handling
+#         # cdss_req = _get_error_handler(
+#         #     url      = url
+#         #     )
+
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
+
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
+
+#     return data_df
+
+# def get_call_analysis_gnisid(
+#     gnis_id             = None,
+#     admin_no            = None,
+#     stream_mile         = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return call analysis by GNIS ID from analysis services API
+    
+#     Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
+#     This can be used when there is not an existing WDID to be analyzed.
+
+#     Args:
+#         gnis_id(str): GNIS ID to query. Defaults to None.
+#         admin_no (str, int): Water Right Administration Number. Defaults to None.
+#         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+#     Returns:
+#         pandas dataframe object: dataframe of call services by GNIS ID
+#     """
+    
+#     # list of function inputs
+#     input_args = locals()
+
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = _check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
+    
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
+    
+#     # convert int admin_no to str
+#     if(isinstance(admin_no, (int))):
+#         admin_no = str(admin_no)
+
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbygnisid/?"
+    
+#     # parse start_date into query string format
+#     start = _parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#         )
+
+#     # parse end_date into query string format
+#     end = _parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
+
+#     # maximum records per page
+#     page_size = 50000
+
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
+
+#     # initialize first page index
+#     page_index = 1
+
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
+
+#     print("Retrieving call analysis data by GNIS ID")
+
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
+
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&adminNo={admin_no or ""}'
+#             f'&endDate={end or ""}'
+#             f'&gnisId={gnis_id or ""}'
+#             f'&startDate={start or ""}'
+#             f'&streamMile={stream_mile or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
+
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
+
+#         # make API call w/ error handling
+#         cdss_req = _parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
+        
+#         # # make API call w/ error handling
+#         # cdss_req = _get_error_handler(
+#         #     url      = url
+#         #     )
+
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
+
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
+
+#     return data_df
 
 def get_source_route_framework(
     division            = None,
@@ -4284,6 +4551,59 @@ def _collapse_vector(
             vect = vect.replace(" ", sep)
     
     return vect
+
+def _batch_dates(
+        start_date = None,
+        end_date   = None
+        ):
+    
+    """Create yearly date ranges to make batch GET requests
+
+    Internal function for extracting necessary yearly start and end dates to make a batch of smaller GET requests, instead 1 large date range. 
+    Allows for larger date ranges to be queried from the CDSS API without encountering a server side error.
+
+    Args:
+        start_date (str): starting date in YYYY-MM-DD format. Default is None which defaults start_date to "1900-01-01".
+        end_date (str): ending date in YYYY-MM-DD format. Default is None which defaults to the current date.
+    
+    Returns:
+        list: returns list of date range lists
+    """
+
+    # set default start date if None is given 
+    if start_date is None:
+        start_date = "1900-01-01"
+
+    # set default end_date if None is given 
+    if end_date is None:
+        end_date   = datetime.date.today()
+        end_date   = end_date.strftime('%Y-%m-%d')
+
+    # starting and ending years
+    start_year = int(start_date[:4])
+    end_year   = int(end_date[:4])
+
+    # empty list add date intervals to
+    lst = []
+
+    # if dates are multiple years apart, break into yearly date intervals
+    if start_year != end_year:
+
+        # start_date to end of first year
+        lst.append((start_date, f"{start_year}-12-31"))
+
+        # yearly intervals
+        for y in range(start_year + 1, end_year):
+            lst.append((f"{y}-01-01", f"{y}-12-31"))
+
+        # portion of the last year
+        lst.append((f"{end_year}-01-01", end_date))
+
+    # if dates are within the same year, just return start_date to end_date
+    else:
+        lst.append((start_date, end_date))
+
+    return(lst)
 
 def _get_error_handler(
     url      = None
