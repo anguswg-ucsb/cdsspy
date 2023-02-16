@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.51"
+__version__ = "1.2.52"
 
 import pandas as pd
 import requests
@@ -283,7 +283,7 @@ def get_climate_frostdates(
     Args:
         station_number (str, optional): climate data station number. Defaults to None.
         start_date (str, optional): date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -396,7 +396,7 @@ def _get_climate_ts_day(
         site_id (str, tuple, list, optional): string, tuple or list of climate station site IDs. Defaults to None.
         param (str):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -527,7 +527,7 @@ def _get_climate_ts_month(
         site_id (str, optional):  tuple or list of climate station site IDs. Defaults to None.
         param (str, optional):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -668,7 +668,7 @@ def get_climate_ts(
         site_id (str, optional): string, tuple or list of climate station site IDs. Defaults to None.
         param (str, optional): climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         timescale (str, optional): timestep of the time series data to return, either "day" or "month". Defaults to None and will request daily time series.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
@@ -867,7 +867,7 @@ def get_gw_wl_wellmeasures(
     Args:
         wellid (str): Well ID to query for groundwater water level measurements. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
 
     Returns:
@@ -1880,7 +1880,7 @@ def _get_ref_stationflags(
 
 def _get_structure_divrecday(
     wdid          = None,
-    wc_identifier = "diversion",
+    wc_identifier = None,
     start_date    = None,
     end_date      = None,
     api_key       = None
@@ -1891,9 +1891,9 @@ def _get_structure_divrecday(
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -1921,6 +1921,12 @@ def _get_structure_divrecday(
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
 
+    # correctly format wc_identifier, if NULL, return "*diversion*"
+    wc_id = _align_wcid(
+        x       = wc_identifier,
+        default = "*diversion*"
+        )
+    
     # collapse list, tuple, vector of wdid into query formatted string
     wdid = _collapse_vector(
         vect = wdid, 
@@ -1953,7 +1959,11 @@ def _get_structure_divrecday(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print(f'Retrieving daily structure {wc_identifier} data')
+    # print message
+    if wc_identifier is None: 
+        print(f'Retrieving daily divrec data (diversion)')
+    else:
+        print(f'Retrieving daily divrec data ({wc_identifier})')
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -1961,8 +1971,8 @@ def _get_structure_divrecday(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier=*{wc_identifier or ""}'
-            f'*&min-dataMeasDate={start_date or ""}'
+            f'&wcIdentifier={wc_id or ""}'
+            f'&min-dataMeasDate={start_date or ""}'
             f'&max-dataMeasDate={end_date or ""}'
             f'&wdid={wdid or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
@@ -1999,28 +2009,25 @@ def _get_structure_divrecday(
 
 def _get_structure_divrecmonth(
     wdid          = None,
-    wc_identifier = "diversion",
+    wc_identifier = None,
     start_date    = None,
     end_date      = None,
     api_key       = None
     ):
     """Return Structure Monthly Diversion/Release Records
 
-    Make a request to the api/v2/structures/divrec/divrecmonth/ endpoint to retrieve monthly structure  diversion/release data for a specified WDID within a specified date range.
+    Make a request to the api/v2/structures/divrec/divrecmonth/ endpoint to retrieve monthly structure diversion/release data for a specified WDID within a specified date range.
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of monthly structure diversion/releases records 
     """
-    # # if no wdid is given, return error
-    # if wdid is None:
-    #     raise TypeError("Invalid 'wdid' parameter")
 
     # list of function inputs
     input_args = locals()
@@ -2039,6 +2046,12 @@ def _get_structure_divrecmonth(
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
 
+    # correctly format wc_identifier, if NULL, return "*diversion*"
+    wc_id = _align_wcid(
+        x       = wc_identifier,
+        default = "*diversion*"
+        )
+    
     # collapse list, tuple, vector of wdid into query formatted string
     wdid = _collapse_vector(
         vect = wdid, 
@@ -2071,7 +2084,11 @@ def _get_structure_divrecmonth(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print(f'Retrieving monthly structure {wc_identifier} data')
+    # print message
+    if wc_identifier is None: 
+        print(f'Retrieving monthly divrec data (diversion)')
+    else:
+        print(f'Retrieving monthly divrec data ({wc_identifier})')
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2079,8 +2096,8 @@ def _get_structure_divrecmonth(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier=*{wc_identifier or ""}'
-            f'*&min-dataMeasDate={start_date or ""}'
+            f'&wcIdentifier={wc_id or ""}'
+            f'&min-dataMeasDate={start_date or ""}'
             f'&max-dataMeasDate={end_date or ""}'
             f'&wdid={wdid or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
@@ -2116,7 +2133,7 @@ def _get_structure_divrecmonth(
 
 def _get_structure_divrecyear(
     wdid          = None,
-    wc_identifier = "diversion",
+    wc_identifier = None,
     start_date    = None,
     end_date      = None,
     api_key       = None
@@ -2127,18 +2144,14 @@ def _get_structure_divrecyear(
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of annual structure diversion/releases records 
     """
-
-    # # if no wdid is given, return error
-    # if wdid is None:
-    #     raise TypeError("Invalid 'wdid' parameter")
 
     # list of function inputs
     input_args = locals()
@@ -2156,6 +2169,12 @@ def _get_structure_divrecyear(
     
     #  base API URL
     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
+
+    # correctly format wc_identifier, if NULL, return "*diversion*"
+    wc_id = _align_wcid(
+        x       = wc_identifier,
+        default = "*diversion*"
+        )
 
     # collapse list, tuple, vector of wdid into query formatted string
     wdid = _collapse_vector(
@@ -2189,7 +2208,11 @@ def _get_structure_divrecyear(
     # Loop through pages until there are no more pages to get
     more_pages = True
 
-    print(f'Retrieving yearly structure {wc_identifier} data')
+    # print message
+    if wc_identifier is None: 
+        print(f'Retrieving yearly divrec data (diversion)')
+    else:
+        print(f'Retrieving yearly divrec data ({wc_identifier})')
 
     # Loop through pages until last page of data is found, binding each response dataframe together
     while more_pages == True:
@@ -2197,8 +2220,8 @@ def _get_structure_divrecyear(
         # create query URL string
         url = (
             f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier=*{wc_identifier or ""}'
-            f'*&min-dataMeasDate={start_date or ""}'
+            f'&wcIdentifier={wc_id or ""}'
+            f'&min-dataMeasDate={start_date or ""}'
             f'&max-dataMeasDate={end_date or ""}'
             f'&wdid={wdid or ""}'
             f'&pageSize={page_size}&pageIndex={page_index}'
@@ -2234,7 +2257,7 @@ def _get_structure_divrecyear(
 
 def get_structure_divrec_ts(
     wdid          = None,
-    wc_identifier = "diversion",
+    wc_identifier = None,
     start_date    = None,
     end_date      = None,
     timescale     = None, 
@@ -2247,19 +2270,15 @@ def get_structure_divrec_ts(
 
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  indicating whether "diversion" or "release" should be returned. Defaults to "diversion".
+        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         timescale (str, optional): timestep of the time series data to return, either "day", "month", or "year". Defaults to None and will request daily time series.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of structure diversion/releases time series data
     """
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [wdid, wc_identifier]):
-    #     raise TypeError("Invalid 'wdid' or 'wc_identifier' parameters")
 
     # list of function inputs
     input_args = locals()
@@ -2343,8 +2362,8 @@ def get_structure_stage_ts(
     Args:
         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.. Defaults to None.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+        api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
         pandas dataframe object: dataframe of daily structure stage/volume records 
@@ -2740,7 +2759,7 @@ def _get_sw_ts_day(
         station_number (int, str, optional):  surface water station number. Defaults to None.
         usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -2871,7 +2890,7 @@ def _get_sw_ts_month(
         station_number (int, str, optional):  surface water station number. Defaults to None.
         usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -2999,7 +3018,7 @@ def _get_sw_ts_wyear(
         station_number (int, str, optional):  surface water station number. Defaults to None.
         usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -3368,9 +3387,9 @@ def get_telemetry_ts(
 
     Args:
         abbrev (str, optional): Station abbreviation. Defaults to None.
-        parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations.. Defaults to "DISCHRG".
+        parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations. Defaults to "DISCHRG".
         start_date (str, optional): Date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): Date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): Date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to None and will request daily time series.
         include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
@@ -3754,7 +3773,7 @@ def get_call_analysis_wdid(
         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     Returns:
@@ -3842,7 +3861,7 @@ def get_call_analysis_wdid(
 #         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
 #         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
 #         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-#         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
 #         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
 #     Returns:
@@ -3978,7 +3997,7 @@ def _inner_call_analysis_wdid(
         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -4099,7 +4118,7 @@ def _inner_call_analysis_gnisid(
         admin_no (str, int): Water Right Administration Number. Defaults to None.
         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -4219,7 +4238,7 @@ def get_call_analysis_gnisid(
         admin_no (str, int): Water Right Administration Number. Defaults to None.
         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     Returns:
@@ -4313,7 +4332,7 @@ def get_call_analysis_gnisid(
 #         admin_no (str, int): Water Right Administration Number. Defaults to None.
 #         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
 #         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-#         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
 #         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
 #     Returns:
@@ -4445,7 +4464,7 @@ def get_call_analysis_gnisid(
 #         admin_no (str, int): Water Right Administration Number. Defaults to None.
 #         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
 #         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-#         end_date (str, optional): string date to request data end point YYYY-MM-DD.. Defaults to None, which will return data ending at the current date.
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
 #         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
 #     Returns:
@@ -4794,6 +4813,42 @@ def _check_args(
     else:
         return None
     
+def _align_wcid(
+        x       = None, 
+        default = None
+        ):
+    """Set wc_identifier name to releases or diversions
+
+    Args:
+        x (str): Water class identifier. Defaults to None 
+        default (str, int, bool, Nonetype, optional):  value to return if "x" argument is None. Defaults to None.
+
+    Returns:
+        string: wc_identifier equaling either "diversion", "release", or a properly formatted water class identifier string
+    """
+    # if x is NULL/ not given, return "default"
+    if x is None:
+        return default
+    
+    # check if x is not in any of diversion/release lists
+    if x not in ["diversion", "diversions", "div", "divs", "d", 
+                "release", "releases", "rel", "rels", "r"]:
+        
+        # format wcidentifer query
+        x = "+".join([i.replace(":", "%3A") for i in x.split(" ")])
+
+    # if x in the diversions list
+    if x in ["diversion", "diversions", "div", "divs", "d"]:
+        x = "diversion"
+
+    # if x in the releases list
+    if x in ["release", "releases", "rel", "rels", "r"]:
+        x = "release"
+
+    x = "*" + x + "*"
+
+    return x
+
 def _parse_date(
     date   = None,
     start  = True,
