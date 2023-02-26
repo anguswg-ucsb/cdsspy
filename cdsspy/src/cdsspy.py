@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.52"
+__version__ = "1.2.60"
 
 import pandas as pd
 import requests
@@ -2360,7 +2360,7 @@ def get_structure_stage_ts(
     Make a request to the structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
 
     Args:
-        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+        wdid (str):  WDID code of structure. Defaults to None.
         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
         api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
@@ -2483,7 +2483,7 @@ def get_structures(
         division (int, str, optional): Indicating the water division to query. Defaults to None.
         gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
         water_district (int, str, optional): Indicating the water district to query. Defaults to None.
-        wdid (str, tuple or list, optional): WDIDs code of structure. Defaults to None.
+        wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
     Returns:
@@ -2598,6 +2598,190 @@ def get_structures(
         pts = data_df
         )
     
+    return data_df
+
+def get_water_classes(
+        wdid                = None,
+        county              = None,
+        division            = None,
+        water_district      = None,
+        wc_identifier       = None,
+        aoi                 = None,
+        radius              = None,
+        gnis_id             = None,
+        start_date          = None,
+        end_date            = None,
+        divrectype          = None,
+        ciu_code            = None,
+        timestep            = None,
+        api_key             = None
+        ):
+    """Return list of waterclasses
+
+    Make a request to the /structures/divrec/waterclasses endpoint to identify water classes via a spatial search or by division, county, water_district, GNIS, or WDID.
+
+    Args:
+        wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
+        county (str, optional): county to query. Defaults to None.
+        division (str, int, optional): water division to query. Defaults to None.
+        water_district (str, int, optional): water district to query. Defaults to None.
+        wc_identifier (_type_, optional): series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. The Water Class, combined with a daily, monthly or annual volume, constitutes a Diversion Record. Defaults to None.
+        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+        gnis_id (str, optional): water source - Geographic Name Information System ID. Defaults to None.
+        start_date (str, optional): date of first measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
+        end_date (str, optional): date of last measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
+        divrectype (str, optional): type of record: "DivComment", "DivTotal", "RelComment", "RelTolal", "StageVolume", or "WaterClass".. Defaults to None.
+        ciu_code (str, optional): current in use code of structure. Defaults to None.
+        timestep (str, optional): timestep, one of "day", "month", "year". Defaults to None which returns a daily timestep.
+        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+    Returns:
+        pandas dataframe object: dataframe of water class data for administrative structures
+    """
+
+    # list of function inputs
+    input_args = locals()
+
+    # check function arguments for missing/invalid inputs
+    arg_lst = _check_args(
+        arg_dict = input_args,
+        ignore   = ["api_key", "start_date", "end_date", "aoi", "radius",
+                    "ciu_code", "divrectype", "gnis_id", "timestep"],
+        f        = all
+        )
+    
+    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+    if arg_lst is not None:
+        raise Exception(arg_lst)
+
+    #  base API URL
+    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/waterclasses/?"
+
+    # correctly format wc_identifier, if NULL, return "*diversion*"
+    wc_id = _align_wcid(
+        x       = wc_identifier,
+        default = None
+        )
+    
+    # collapse list, tuple, vector of wdid into query formatted string
+    wdid = _collapse_vector(
+        vect = wdid, 
+        sep  = "%2C+"
+        )
+    
+    # if start_date is None, return None
+    if start_date is None:
+        start = None
+    else:
+        # parse start_date into query string format
+        start = _parse_date(
+            date   = start_date,
+            start  = True,
+            format = "%m-%d-%Y",
+            sep    = "%2F"
+        )
+
+    # if end_date is None, return None
+    if end_date is None:
+        end = None
+    else:
+        # parse start_date into query string format
+        end = _parse_date(
+            date   = end_date,
+            start  = False,
+            format = "%m-%d-%Y",
+            sep    = "%2F"
+        )
+
+    # collapse WDID list, tuple, vector of site_id into query formatted string
+    wdid = _collapse_vector(
+        vect = wdid, 
+        sep  = "%2C+"
+        )
+    
+    # check and extract spatial data from 'aoi' and 'radius' args for location search query
+    aoi_lst = _check_aoi(
+        aoi    = aoi,
+        radius = radius
+        )
+
+    # lat/long coords and radius
+    lng    = aoi_lst[0]
+    lat    = aoi_lst[1]
+    radius = aoi_lst[2]
+
+    # if county is given, make sure it is separated by "+" and all uppercase 
+    if county is not None:
+        county = county.replace(" ", "+")
+        county = county.upper()
+    
+    # maximum records per page
+    page_size = 50000
+
+    # initialize empty dataframe to store data from multiple pages
+    data_df   = pd.DataFrame()
+
+    # initialize first page index
+    page_index = 1
+
+    # Loop through pages until there are no more pages to get
+    more_pages = True
+
+    # print message
+    print("Retrieving structure water classes")
+
+    # Loop through pages until last page of data is found, binding each response dataframe together
+    while more_pages == True:
+        
+        # create query URL string
+        url = (
+            f'{base}'
+            f'timestep={timestep or ""}'
+            f'format=json&dateFormat=spaceSepToSeconds'
+            f'&ciuCode={ciu_code or ""}'
+            f'&county={county or ""}'
+            f'&division={division or ""}'
+            f'&divrectype={divrectype or ""}'
+            f'&min-porEnd={end or ""}'
+            f'&min-porStart={start or ""}'
+            f'&gnisId={gnis_id or ""}'
+            f'&waterDistrict={water_district or ""}'
+            f'&wcIdentifier={wc_id or ""}'
+            f'&wdid={wdid or ""}'
+            f'&latitude={lat or ""}' 
+            f'&longitude={lng or ""}' 
+            f'&radius={radius or ""}' 
+            f'&units=miles' 
+            f'&pageSize={page_size}&pageIndex={page_index}'
+            )
+        
+        # If an API key is provided, add it to query URL
+        if api_key is not None:
+            # Construct query URL w/ API key
+            url = url + "&apiKey=" + str(api_key)
+
+        # make API call w/ error handling
+        cdss_req = _parse_gets(
+            url      = url, 
+            arg_dict = input_args,
+            ignore   = None
+            )
+
+        # extract dataframe from list column
+        cdss_df = cdss_req.json()
+        cdss_df = pd.DataFrame(cdss_df)
+        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+        # bind data from this page
+        data_df = pd.concat([data_df, cdss_df])
+
+        # Check if more pages to get to continue/stop while loop
+        if (len(cdss_df.index) < page_size):
+            more_pages = False
+        else:
+            page_index += 1
+
     return data_df
 
 def get_sw_stations(
@@ -4848,6 +5032,86 @@ def _align_wcid(
     x = "*" + x + "*"
 
     return x
+def _valid_divrectype(
+        divrectype = None
+        ):
+
+    # check if type is NULL, default timescale to "day"
+    if divrectype is None:
+
+        divrectype = None
+
+        return divrectype
+    
+    # list of available divrectypes
+    divrectype_lst <- ["DivComment", "DivTotal", "RelComment", "RelTolal", "StageVolume", "WaterClass"]
+
+    # if a divrectype argument is provided (not NULL)
+    if divrectype is not None:
+
+        # lowercase divrectype_lst 
+        low_lst = [i.lower() for i in divrectype_lst]
+
+        # if divrectype matches any of the list, return correctly formatted divrectype
+        if divrectype.lower() in low_lst:
+            
+            divrectype = divrectype_lst[low_lst.index(divrectype.lower())]
+        
+
+        # check if divrectype is a valid divrectype
+        if divrectype.lower() not in low_lst and divrectype not in divrectype_lst:
+            raise Exception((
+                f"Invalid `divrectype` argument: '{divrectype}'",
+                f"\nPlease enter one of the following valid 'divrectype' arguments: \n{divrectype_lst}" 
+                ))
+
+    return(divrectype)
+
+def _valid_timesteps(
+        timestep = None
+        ):
+    
+    # list of valid timescales
+    day_lst       = ["day", "days", "daily", "d"]
+    month_lst     = ["month", "months", "monthly", "mon", "mons", "m"]
+    year_lst      = ['year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+
+    timestep_lst  = [day_lst, month_lst, year_lst]
+
+    # check if type is None, default timescale to "day"
+    if timestep is None:
+        # set timescale to "day"
+        timestep = "day"
+
+    # convert timescale to lowercase
+    timestep = timestep.lower()
+    
+    # check if type is correctly inputed
+    if timestep not in timestep_lst: 
+        raise Exception((
+            f"Invalid `timestep` argument: '{timestep}'",
+            f"\nPlease enter one of the following valid timesteps:\nDay: {day_lst}\nMonth: {month_lst}\nYear: {year_lst}" 
+            ))
+    
+    # check if given timestep is in day_lst and set timestep to "day"
+    if timestep in day_lst:
+
+        # set timescale to "day"
+        timestep = "day"
+
+    # check if given timestep is in month_lst and set timestep to "month"
+    if timestep in month_lst:
+        
+        # set timescale to "mohth"
+        timestep = "month"
+
+    # check if given timestep is in month_lst and set timestep to "month"
+    if timestep in year_lst:
+        
+        # set timescale to "year"
+        timestep = "year"
+
+    return timestep
 
 def _parse_date(
     date   = None,
