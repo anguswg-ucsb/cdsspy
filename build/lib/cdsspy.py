@@ -1,5 +1,5 @@
 # __init__.py
-__version__ = "1.2.61"
+__version__ = "1.2.62"
 
 import pandas as pd
 import requests
@@ -1878,7 +1878,7 @@ def _get_ref_stationflags(
 
     return data_df
 
-def _get_structure_divrecday(
+def _get_structures_divrecday(
     wdid          = None,
     wc_identifier = None,
     start_date    = None,
@@ -2007,7 +2007,7 @@ def _get_structure_divrecday(
     return data_df
 
 
-def _get_structure_divrecmonth(
+def _get_structures_divrecmonth(
     wdid          = None,
     wc_identifier = None,
     start_date    = None,
@@ -2131,7 +2131,7 @@ def _get_structure_divrecmonth(
 
     return data_df
 
-def _get_structure_divrecyear(
+def _get_structures_divrecyear(
     wdid          = None,
     wc_identifier = None,
     start_date    = None,
@@ -2255,7 +2255,7 @@ def _get_structure_divrecyear(
     
     return data_df
 
-def get_structure_divrec_ts(
+def get_structures_divrec_ts(
     wdid          = None,
     wc_identifier = None,
     start_date    = None,
@@ -2310,7 +2310,7 @@ def get_structure_divrec_ts(
 
     # request daily structure divrec time series data
     if timescale in day_lst:    
-        divrec_df = _get_structure_divrecday(
+        divrec_df = _get_structures_divrecday(
             wdid          = wdid,
             wc_identifier = wc_identifier,
             start_date    = start_date,
@@ -2324,7 +2324,7 @@ def get_structure_divrec_ts(
     # request monthly structure divrec time series data
     if timescale in month_lst:    
 
-        divrec_df = _get_structure_divrecmonth(
+        divrec_df = _get_structures_divrecmonth(
             wdid          = wdid,
             wc_identifier = wc_identifier,
             start_date    = start_date,
@@ -2338,7 +2338,7 @@ def get_structure_divrec_ts(
     # request yearly structure divrec time series data
     if timescale in year_lst:    
 
-        divrec_df = _get_structure_divrecyear(
+        divrec_df = _get_structures_divrecyear(
             wdid          = wdid,
             wc_identifier = wc_identifier,
             start_date    = start_date,
@@ -2349,7 +2349,7 @@ def get_structure_divrec_ts(
         # return yearly structure divrec time series data
         return divrec_df
 
-def get_structure_stage_ts(
+def get_structures_stage_ts(
     wdid          = None,
     start_date    = None,
     end_date      = None,
@@ -2368,10 +2368,6 @@ def get_structure_stage_ts(
     Returns:
         pandas dataframe object: dataframe of daily structure stage/volume records 
     """
-
-    # # if no abbreviation is given, return error
-    # if wdid is None:
-    #     raise TypeError("Invalid 'wdid' parameter")
 
     # list of function inputs
     input_args = locals()
