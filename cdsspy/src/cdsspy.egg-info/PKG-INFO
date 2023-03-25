@@ -1,6 +1,6 @@
 Metadata-Version: 2.1
 Name: cdsspy
-Version: 1.2.62
+Version: 1.2.63
 Summary: Provides Python functions for discovering and requesting data from the CDSS REST API.
 Author: Angus Watters
 Classifier: Programming Language :: Python :: 3
