@@ -2449,10 +2449,6 @@ def get_structures(
         pandas dataframe object: dataframe of administrative structures
     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, county, division, gnis_id, water_district, wdid]):
-    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'gnis_id', 'water_district', or 'wdid' parameters")
-
     # list of function inputs
     input_args = locals()
 
@@ -2772,10 +2768,6 @@ def get_sw_stations(
     Returns:
         pandas dataframe object: dataframe of surface water station data
     """
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, abbrev, county, division, station_name, usgs_id, water_district]):
-    #     raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'station_name', 'usgs_id', or 'water_district' parameters")
 
     # list of function inputs
     input_args = locals()
