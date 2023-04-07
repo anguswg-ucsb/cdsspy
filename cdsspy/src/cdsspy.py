@@ -158,15 +158,10 @@ def get_climate_stations(
         water_district (int, str, optional): Water district to query for climate stations. Defaults to None.
         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-
     Returns:
         pandas dataframe object: dataframe of climate station data
     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, county, division, station_name, site_id, water_district]):
-    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'station_name', 'site_id', or 'water_district' parameters")
-    
     # list of function inputs
     input_args = locals()
 
@@ -286,10 +281,7 @@ def get_climate_frostdates(
     Returns:
         pandas dataframe object: dataframe of climate station frost dates data
     """
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [station_number]):
-    #     raise TypeError("Invalid 'station_number' parameter")
-    
+
     # list of function inputs
     input_args = locals()
 
@@ -536,10 +528,6 @@ def _get_climate_ts_month(
     # if parameter is not in list of valid parameters
     if param not in param_lst:
         raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [site_id, station_number]):
-    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
     
     # list of function inputs
     input_args = locals()
@@ -673,10 +661,6 @@ def get_climate_ts(
         pandas dataframe object: dataframe of climate station time series data
     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [site_id, station_number]):
-    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
-
     # list of function inputs
     input_args = locals()
 
@@ -758,10 +742,7 @@ def get_gw_wl_wells(
     Returns:
         pandas dataframe object: dataframe of groundwater water level wells
     """
-    # If all inputs are None, then return error message
-    # if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
-        # raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
-    
+
     # list of function inputs
     input_args = locals()
 
@@ -870,10 +851,6 @@ def get_gw_wl_wellmeasures(
     Returns:
         pandas dataframe object: dataframe of groundwater well measurements
     """
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [wellid]):
-    #     raise TypeError("Invalid 'wellid' parameter")
 
     # list of function inputs
     input_args = locals()
@@ -986,10 +963,6 @@ def get_gw_gplogs_wells(
         pandas dataframe object: dataframe of groundwater geophysicallog wells
     """
 
-    # If all inputs are None, then return error message
-    # if all(i is None for i in [county, designated_basin, division, management_district, water_district, wellid]):
-        # raise TypeError("Invalid 'county', 'designated_basin', 'division', 'management_district', 'water_district', or 'wellid' parameters")
-    
     # list of function inputs
     input_args = locals()
 
@@ -1094,9 +1067,6 @@ def get_gw_gplogs_geologpicks(
     Returns:
         pandas dataframe object: dataframe of groundwater geophysical log picks
     """
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [wellid]):
-    #     raise TypeError("Invalid 'wellid' parameter")
 
     # list of function inputs
     input_args = locals()
@@ -1896,10 +1866,6 @@ def _get_structures_divrecday(
     Returns:
         pandas dataframe object: dataframe of daily structure diversion/releases records 
     """
-
-    # # if no wdid is given, return error
-    # if wdid is None:
-    #     raise TypeError("Invalid 'wdid' parameter")
 
     # list of function inputs
     input_args = locals()
