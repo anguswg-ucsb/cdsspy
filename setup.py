@@ -18,6 +18,6 @@ setuptools.setup(
     ],                                      # Information to filter the project on PyPi website
     python_requires='>=3.6',                # Minimum version requirement of the package
     py_modules=["cdsspy"],             # Name of the python package
-    package_dir={'':'cdsspy/src'},     # Directory of the source code of the package
+    package_dir={'':'src/cdsspy'},     # Directory of the source code of the package
     install_requires=['pandas', 'datetime', 'requests', 'geopandas', 'shapely', 'pyproj']
 )
