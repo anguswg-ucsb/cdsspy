@@ -1,4031 +1,3943 @@
-# __init__.py
-__version__ = "1.2.64"
+# # __init__.py
+# __version__ = "1.2.64"
 
-import pandas as pd
-import requests
-import datetime
-import geopandas
-import shapely
-import pyproj
+# import pandas as pd
+# import requests
+# import datetime
+# import geopandas
+# import shapely
+# import pyproj
 
-from src.cdsspy.utils import utils
-# from src.cdsspy import utils
+# from cdsspy.utils import utils2
+# # from src.cdsspy import utils
 
-def get_admin_calls(
-    division            = None,
-    location_wdid       = None,
-    call_number         = None,
-    start_date          = None,
-    end_date            = None,
-    active              = True,
-    api_key             = None
-    ):
-    """Return active/historic administrative calls data
+# def get_admin_calls(
+#     division            = None,
+#     location_wdid       = None,
+#     call_number         = None,
+#     start_date          = None,
+#     end_date            = None,
+#     active              = True,
+#     api_key             = None
+#     ):
+#     """Return active/historic administrative calls data
 
-    Make a request to the api/v2/administrativecalls endpoints to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
+#     Make a request to the api/v2/administrativecalls endpoints to locate active or historical administrative calls by division, location WDID, or call number within a specified date range.
 
-    Args:
-        division (int, str, optional): Water division to query for administrative calls. Defaults to None.
-        location_wdid (str, optional): call location structure WDID to query for administrative calls. Defaults to None.
-        call_number (int, str, optional): unique call identifier to query. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        active (bool, optional): whether to get active or historical administrative calls. Defaults to True which returns active administrative calls.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         division (int, str, optional): Water division to query for administrative calls. Defaults to None.
+#         location_wdid (str, optional): call location structure WDID to query for administrative calls. Defaults to None.
+#         call_number (int, str, optional): unique call identifier to query. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         active (bool, optional): whether to get active or historical administrative calls. Defaults to True which returns active administrative calls.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of active/historical administrative calls data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of active/historical administrative calls data
+#     """
     
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date", "active"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils2._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date", "active"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # collapse location_wdid list, tuple, vector of site_id into query formatted string
-    location_wdid = utils._collapse_vector(
-        vect = location_wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse location_wdid list, tuple, vector of site_id into query formatted string
+#     location_wdid = utils2._collapse_vector(
+#         vect = location_wdid, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils2._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils2._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    #  base API URL and print statements
-    if active == True:
-        print("Retrieving active administrative calls data")
-        base = "https://dwr.state.co.us/Rest/GET/api/v2/administrativecalls/active/?"
-    else:
-        print("Retrieving historical administrative calls data")
-        base = "https://dwr.state.co.us/Rest/GET/api/v2/administrativecalls/historical/?"
+#     #  base API URL and print statements
+#     if active == True:
+#         print("Retrieving active administrative calls data")
+#         base = "https://dwr.state.co.us/Rest/GET/api/v2/administrativecalls/active/?"
+#     else:
+#         print("Retrieving historical administrative calls data")
+#         base = "https://dwr.state.co.us/Rest/GET/api/v2/administrativecalls/historical/?"
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving surface water station data")
+#     print("Retrieving surface water station data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
         
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-dateTimeSet={start_date or ""}' 
-            f'&max-dateTimeSet={end_date or ""}'
-            f'&division={division or ""}' 
-            f'&callNumber={call_number or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-dateTimeSet={start_date or ""}' 
+#             f'&max-dateTimeSet={end_date or ""}'
+#             f'&division={division or ""}' 
+#             f'&callNumber={call_number or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # Construct query URL w/ location WDID
-        if location_wdid is not None:
-            url = url + "&locationWdid=" + str(location_wdid)
+#         # Construct query URL w/ location WDID
+#         if location_wdid is not None:
+#             url = url + "&locationWdid=" + str(location_wdid)
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils2._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
         
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def get_climate_stations(
-    aoi                 = None,
-    radius              = None,
-    county              = None,
-    division            = None,
-    station_name        = None,
-    site_id             = None,
-    water_district      = None,
-    api_key             = None
-    ):
-    """Return Climate Station information
+# def get_climate_stations(
+#     aoi                 = None,
+#     radius              = None,
+#     county              = None,
+#     division            = None,
+#     station_name        = None,
+#     site_id             = None,
+#     water_district      = None,
+#     api_key             = None
+#     ):
+#     """Return Climate Station information
 
-    Make a request to the climatedata/climatestations/ endpoint to locate climate stations via a spatial search, or by county, division, station name, Site ID or water district.
+#     Make a request to the climatedata/climatestations/ endpoint to locate climate stations via a spatial search, or by county, division, station name, Site ID or water district.
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        county (str, optional): County to query for climate stations. Defaults to None.
-        division (int, str, optional):  Water division to query for climate stations. Defaults to None.
-        station_name (str, optional):  climate station name. Defaults to None.
-        site_id (str, tuple, list, optional): string, tuple or list of site IDs. Defaults to None.
-        water_district (int, str, optional): Water district to query for climate stations. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         county (str, optional): County to query for climate stations. Defaults to None.
+#         division (int, str, optional):  Water division to query for climate stations. Defaults to None.
+#         station_name (str, optional):  climate station name. Defaults to None.
+#         site_id (str, tuple, list, optional): string, tuple or list of site IDs. Defaults to None.
+#         water_district (int, str, optional): Water district to query for climate stations. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of climate station data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of climate station data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # collapse site_id list, tuple, vector of site_id into query formatted string
-    site_id = utils._collapse_vector(
-        vect = site_id, 
-        sep  = "%2C+"
-        )
+#     # collapse site_id list, tuple, vector of site_id into query formatted string
+#     site_id = utils._collapse_vector(
+#         vect = site_id, 
+#         sep  = "%2C+"
+#         )
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestations/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestations/?"
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving climate station data")
+#     print("Retrieving climate station data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}' 
-            f'&division={division or ""}'
-            f'&stationName={station_name or ""}' 
-            f'&siteId={site_id or ""}'
-            f'&waterDistrict={water_district or ""}' 
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}' 
+#             f'&division={division or ""}'
+#             f'&stationName={station_name or ""}' 
+#             f'&siteId={site_id or ""}'
+#             f'&waterDistrict={water_district or ""}' 
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
 
-    return data_df
+#     return data_df
 
-def get_climate_frostdates(
-    station_number      = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return climate stations frost dates 
+# def get_climate_frostdates(
+#     station_number      = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return climate stations frost dates 
 
-    Make a request to the /climatedata/climatestationfrostdates endpoint to retrieve climate stations frost dates data by station number within a given date range (start and end dates)
+#     Make a request to the /climatedata/climatestationfrostdates endpoint to retrieve climate stations frost dates data by station number within a given date range (start and end dates)
 
-    Args:
-        station_number (str, optional): climate data station number. Defaults to None.
-        start_date (str, optional): date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional): climate data station number. Defaults to None.
+#         start_date (str, optional): date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of climate station frost dates data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of climate station frost dates data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = any
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
     
-    # parse start_date into query string format
-    start_year = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%Y"
-    )
+#     # parse start_date into query string format
+#     start_year = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%Y"
+#     )
 
-    # parse end_date into query string format
-    end_year = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%Y"
-        )
+#     # parse end_date into query string format
+#     end_year = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving climate station frost dates data")
+#     print("Retrieving climate station frost dates data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-calYear={start_year or ""}' 
-            f'&max-calYear={end_year or ""}'
-            f'&stationNum={station_number or ""}' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-calYear={start_year or ""}' 
+#             f'&max-calYear={end_year or ""}'
+#             f'&stationNum={station_number or ""}' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
 
-def _get_climate_ts_day(
-    station_number      = None,
-    site_id             = None,
-    param               = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return daily climate data
+# def _get_climate_ts_day(
+#     station_number      = None,
+#     site_id             = None,
+#     param               = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return daily climate data
     
-    Make a request to the /climatedata/climatestationtsday endpoint to retrieve climate stations daily time series data by station number, or Site IDs within a given date range (start and end dates)
+#     Make a request to the /climatedata/climatestationtsday endpoint to retrieve climate stations daily time series data by station number, or Site IDs within a given date range (start and end dates)
     
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        site_id (str, tuple, list, optional): string, tuple or list of climate station site IDs. Defaults to None.
-        param (str):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         site_id (str, tuple, list, optional): string, tuple or list of climate station site IDs. Defaults to None.
+#         param (str):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of climate station daily time series data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of climate station daily time series data
+#     """
 
-    # list of valid parameters
-    param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
+#     # list of valid parameters
+#     param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
 
-    # if parameter is not in list of valid parameters
-    if param not in param_lst:
-        raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
+#     # if parameter is not in list of valid parameters
+#     if param not in param_lst:
+#         raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [site_id, station_number]):
-    #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [site_id, station_number]):
+#     #     raise TypeError("Invalid 'site_id' or 'station_number' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_dict)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_dict)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
 
-    # collapse list, tuple, vector of site_id into query formatted string
-    site_id = utils._collapse_vector(
-        vect = site_id, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of site_id into query formatted string
+#     site_id = utils._collapse_vector(
+#         vect = site_id, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print(f"Retrieving daily climate time series data ({param})")
+#     print(f"Retrieving daily climate time series data ({param})")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-measDate={start_date or ""}' 
-            f'&max-measDate={end_date or ""}'
-            f'&stationNum={station_number or ""}' 
-            f'&siteId={site_id or ""}'
-            f'&measType={param or ""}' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-measDate={start_date or ""}' 
+#             f'&max-measDate={end_date or ""}'
+#             f'&stationNum={station_number or ""}' 
+#             f'&siteId={site_id or ""}'
+#             f'&measType={param or ""}' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # convert measDate columns to 'date' and pd datetime type
-        cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
+#         # convert measDate columns to 'date' and pd datetime type
+#         cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def _get_climate_ts_month(
-    station_number      = None,
-    site_id             = None,
-    param               = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return monthly climate data
+# def _get_climate_ts_month(
+#     station_number      = None,
+#     site_id             = None,
+#     param               = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return monthly climate data
     
-    Make a request to the /climatedata/climatestationtsmonth endpoint to retrieve climate stations monthly time series data by station number, or Site IDs within a given date range (start and end dates)
+#     Make a request to the /climatedata/climatestationtsmonth endpoint to retrieve climate stations monthly time series data by station number, or Site IDs within a given date range (start and end dates)
     
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        site_id (str, optional):  tuple or list of climate station site IDs. Defaults to None.
-        param (str, optional):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         site_id (str, optional):  tuple or list of climate station site IDs. Defaults to None.
+#         param (str, optional):  climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of climate station monthly time series data
-    """
-    # list of valid parameters
-    param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
+#     Returns:
+#         pandas dataframe object: dataframe of climate station monthly time series data
+#     """
+#     # list of valid parameters
+#     param_lst = ["Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow","SnowDepth", "SnowSWE", "Solar","VP", "Wind"]
 
-    # if parameter is not in list of valid parameters
-    if param not in param_lst:
-        raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
+#     # if parameter is not in list of valid parameters
+#     if param not in param_lst:
+#         raise ValueError("Invalid `param` argument \nPlease enter one of the following valid parameters: \nEvap, FrostDate, MaxTemp, MeanTemp, MinTemp, Precip, Snow, SnowDepth, SnowSWE, Solar, VP, Wind")
     
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
 
-    # collapse list, tuple, vector of site_id into query formatted string
-    site_id = utils._collapse_vector(
-        vect = site_id, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of site_id into query formatted string
+#     site_id = utils._collapse_vector(
+#         vect = site_id, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%Y"
+#         )
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print(f"Retrieving monthly climate time series data ({param})")
+#     print(f"Retrieving monthly climate time series data ({param})")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-calYear={start_date or ""}'
-            f'&max-calYear={end_date or ""}'
-            f'&stationNum={station_number or ""}' 
-            f'&siteId={site_id or ""}' 
-            f'&measType={param or ""}' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-calYear={start_date or ""}'
+#             f'&max-calYear={end_date or ""}'
+#             f'&stationNum={station_number or ""}' 
+#             f'&siteId={site_id or ""}' 
+#             f'&measType={param or ""}' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # convert string month to have leading 0 if month < 10
-        cdss_df['month_str'] = cdss_df["calMonthNum"]
+#         # convert string month to have leading 0 if month < 10
+#         cdss_df['month_str'] = cdss_df["calMonthNum"]
 
-        # add month w/ leading 0 column
-        cdss_df.loc[(cdss_df['calMonthNum'] < 10), 'month_str'] = "0" + cdss_df["calMonthNum"].astype(str)
+#         # add month w/ leading 0 column
+#         cdss_df.loc[(cdss_df['calMonthNum'] < 10), 'month_str'] = "0" + cdss_df["calMonthNum"].astype(str)
 
-        # create datetime column w/ calYear and month_str columns, and convert to pd datetime type
-        cdss_df["datetime"] = pd.to_datetime(cdss_df['calYear'].astype(str) + "-" + cdss_df["month_str"].astype(str) + "-01")
+#         # create datetime column w/ calYear and month_str columns, and convert to pd datetime type
+#         cdss_df["datetime"] = pd.to_datetime(cdss_df['calYear'].astype(str) + "-" + cdss_df["month_str"].astype(str) + "-01")
     
-        # drop month_str column
-        cdss_df = cdss_df.drop('month_str', axis = 1)
+#         # drop month_str column
+#         cdss_df = cdss_df.drop('month_str', axis = 1)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def get_climate_ts(
-    station_number      = None,
-    site_id             = None,
-    param               = None,
-    start_date          = None,
-    end_date            = None,
-    timescale           = None,
-    api_key             = None
-    ):
+# def get_climate_ts(
+#     station_number      = None,
+#     site_id             = None,
+#     param               = None,
+#     start_date          = None,
+#     end_date            = None,
+#     timescale           = None,
+#     api_key             = None
+#     ):
 
-    """Return climate station time series data
+#     """Return climate station time series data
 
-    Make a request to the /climatedata/climatestationts endpoints to retrieve daily or monthly (climatestationtsday or climatestationtsmonth)climate station time series data by station number or Site IDs within a given date range (start and end dates)
+#     Make a request to the /climatedata/climatestationts endpoints to retrieve daily or monthly (climatestationtsday or climatestationtsmonth)climate station time series data by station number or Site IDs within a given date range (start and end dates)
     
-    Args:
-        station_number (str, optional): climate data station number. Defaults to None.
-        site_id (str, optional): string, tuple or list of climate station site IDs. Defaults to None.
-        param (str, optional): climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): timestep of the time series data to return, either "day" or "month". Defaults to None and will request daily time series.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional): climate data station number. Defaults to None.
+#         site_id (str, optional): string, tuple or list of climate station site IDs. Defaults to None.
+#         param (str, optional): climate variable. One of: "Evap", "FrostDate",  "MaxTemp", "MeanTemp", "MinTemp", "Precip", "Snow", "SnowDepth", "SnowSWE", "Solar","VP", "Wind". Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         timescale (str, optional): timestep of the time series data to return, either "day" or "month". Defaults to None and will request daily time series.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of climate station time series data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of climate station time series data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore  = ["api_key", "start_date", "end_date", "timescale"],
-        f       = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore  = ["api_key", "start_date", "end_date", "timescale"],
+#         f       = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    # lists of valid timesteps
-    day_lst       = ['day', 'days', 'daily', 'd']
-    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
-    timescale_lst = day_lst + month_lst
+#     # lists of valid timesteps
+#     day_lst       = ['day', 'days', 'daily', 'd']
+#     month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+#     timescale_lst = day_lst + month_lst
 
-    # if timescale is None, then defaults to "day"
-    if timescale is None: 
-        timescale = "day"
+#     # if timescale is None, then defaults to "day"
+#     if timescale is None: 
+#         timescale = "day"
         
-    # if parameter is NOT in list of valid parameters
-    if timescale not in timescale_lst:
-        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}")
+#     # if parameter is NOT in list of valid parameters
+#     if timescale not in timescale_lst:
+#         raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}")
 
-    # request daily climate time series data
-    if timescale in day_lst:    
-        clim_data = _get_climate_ts_day(
-            station_number      = station_number,
-            site_id             = site_id,
-            param               = param,
-            start_date          = start_date,
-            end_date            = end_date,
-            api_key             = api_key
-            )
+#     # request daily climate time series data
+#     if timescale in day_lst:    
+#         clim_data = _get_climate_ts_day(
+#             station_number      = station_number,
+#             site_id             = site_id,
+#             param               = param,
+#             start_date          = start_date,
+#             end_date            = end_date,
+#             api_key             = api_key
+#             )
 
-        # return daily climate time series data
-        return clim_data
+#         # return daily climate time series data
+#         return clim_data
 
-    # request monthly climate time series data
-    if timescale in month_lst:    
+#     # request monthly climate time series data
+#     if timescale in month_lst:    
 
-        clim_data = _get_climate_ts_month(
-            station_number      = station_number,
-            site_id             = site_id,
-            param               = param,
-            start_date          = start_date,
-            end_date            = end_date,
-            api_key             = api_key
-            )
+#         clim_data = _get_climate_ts_month(
+#             station_number      = station_number,
+#             site_id             = site_id,
+#             param               = param,
+#             start_date          = start_date,
+#             end_date            = end_date,
+#             api_key             = api_key
+#             )
 
-        # return monthly climate time series data
-        return clim_data
+#         # return monthly climate time series data
+#         return clim_data
 
-def get_gw_wl_wells(
-    county              = None,
-    designated_basin    = None,
-    division            = None,
-    management_district = None,
-    water_district      = None,
-    wellid              = None,
-    api_key             = None
-    ):
-    """Search for groundwater water level wells
+# def get_gw_wl_wells(
+#     county              = None,
+#     designated_basin    = None,
+#     division            = None,
+#     management_district = None,
+#     water_district      = None,
+#     wellid              = None,
+#     api_key             = None
+#     ):
+#     """Search for groundwater water level wells
     
-    Make a request to the groundwater/waterlevels/wells endpoint to retrieve groundwater water level wells data.
+#     Make a request to the groundwater/waterlevels/wells endpoint to retrieve groundwater water level wells data.
 
-    Args:
-        county (str, optional): County to query for groundwater water level wells. Defaults to None.
-        designated_basin (str, optional): Designated basin to query for groundwater water level wells. Defaults to None.
-        division (str, optional): Division to query for groundwater water level wells. Defaults to None.
-        management_district (str, optional): Management district to query for groundwater water level wells. Defaults to None.
-        water_district (str, optional): Water district to query for groundwater water level wells. Defaults to None.
-        wellid (str, optional): Well ID of a groundwater water level well. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
+#     Args:
+#         county (str, optional): County to query for groundwater water level wells. Defaults to None.
+#         designated_basin (str, optional): Designated basin to query for groundwater water level wells. Defaults to None.
+#         division (str, optional): Division to query for groundwater water level wells. Defaults to None.
+#         management_district (str, optional): Management district to query for groundwater water level wells. Defaults to None.
+#         water_district (str, optional): Water district to query for groundwater water level wells. Defaults to None.
+#         wellid (str, optional): Well ID of a groundwater water level well. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
 
-    Returns:
-        pandas dataframe object: dataframe of groundwater water level wells
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of groundwater water level wells
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore  = ["api_key"],
-        f       = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore  = ["api_key"],
+#         f       = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wells/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wells/?"
 
-    # if county is given, make sure it is separated by "+" and all uppercase 
-    if county is not None:
-        county = county.replace(" ", "+")
-        county = county.upper()
+#     # if county is given, make sure it is separated by "+" and all uppercase 
+#     if county is not None:
+#         county = county.replace(" ", "+")
+#         county = county.upper()
 
-    # if management_district is given, make sure it is separated by "+" and all uppercase 
-    if management_district is not None:
-        management_district = management_district.replace(" ", "+")
-        management_district = management_district.upper()
+#     # if management_district is given, make sure it is separated by "+" and all uppercase 
+#     if management_district is not None:
+#         management_district = management_district.replace(" ", "+")
+#         management_district = management_district.upper()
 
-    # if designated_basin is given, make sure it is separated by "+" and all uppercase 
-    if designated_basin is not None:
-        designated_basin = designated_basin.replace(" ", "+")
-        designated_basin = designated_basin.upper()
+#     # if designated_basin is given, make sure it is separated by "+" and all uppercase 
+#     if designated_basin is not None:
+#         designated_basin = designated_basin.replace(" ", "+")
+#         designated_basin = designated_basin.upper()
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving groundwater water level data")
+#     print("Retrieving groundwater water level data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}' 
-            f'&wellId={wellid or ""}'
-            f'&division={division or ""}' 
-            f'&waterDistrict={water_district or ""}' 
-            f'&designatedBasin={designated_basin or ""}' 
-            f'&managementDistrict={management_district or ""}' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}' 
+#             f'&wellId={wellid or ""}'
+#             f'&division={division or ""}' 
+#             f'&waterDistrict={water_district or ""}' 
+#             f'&designatedBasin={designated_basin or ""}' 
+#             f'&managementDistrict={management_district or ""}' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_gw_wl_wellmeasures(
-    wellid        = None,
-    start_date    = None,
-    end_date      = None,
-    api_key       = None
-    ):
-    """Return groundwater water level well measurements
+# def get_gw_wl_wellmeasures(
+#     wellid        = None,
+#     start_date    = None,
+#     end_date      = None,
+#     api_key       = None
+#     ):
+#     """Return groundwater water level well measurements
 
-    Make a request to the groundwater/waterlevels/wellmeasurements endpoint to retrieve groundwater water level well measurement data.
+#     Make a request to the groundwater/waterlevels/wellmeasurements endpoint to retrieve groundwater water level well measurement data.
 
-    Args:
-        wellid (str): Well ID to query for groundwater water level measurements. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
+#     Args:
+#         wellid (str): Well ID to query for groundwater water level measurements. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
 
-    Returns:
-        pandas dataframe object: dataframe of groundwater well measurements
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of groundwater well measurements
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wellmeasurements/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/waterlevels/wellmeasurements/?"
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving groundwater water level measurements")
+#     print("Retrieving groundwater water level measurements")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-measurementDate={start_date or ""}' 
-            f'&min-measurementDate={end_date or ""}'
-            f'&wellId={wellid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-measurementDate={start_date or ""}' 
+#             f'&min-measurementDate={end_date or ""}'
+#             f'&wellId={wellid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_gw_gplogs_wells(
-    county              = None,
-    designated_basin    = None,
-    division            = None,
-    management_district = None,
-    water_district      = None,
-    wellid              = None,
-    api_key             = None
-    ):
-    """Search for groundwater geophysicallog wells
+# def get_gw_gplogs_wells(
+#     county              = None,
+#     designated_basin    = None,
+#     division            = None,
+#     management_district = None,
+#     water_district      = None,
+#     wellid              = None,
+#     api_key             = None
+#     ):
+#     """Search for groundwater geophysicallog wells
     
-    Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysicallog wells data.
+#     Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysicallog wells data.
     
-    Args:
-        county (str, optional): County to query for groundwater geophysicallog wells. Defaults to None.
-        designated_basin (str, optional): Designated basin to query for groundwater geophysicallog wells. Defaults to None.
-        division (str, optional): Division to query for groundwater geophysicallog wells. Defaults to None.
-        management_district (str, optional): Management district to query for groundwater geophysicallog wells. Defaults to None.
-        water_district (str, optional): Water district to query for groundwater geophysicallog wells. Defaults to None.
-        wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
+#     Args:
+#         county (str, optional): County to query for groundwater geophysicallog wells. Defaults to None.
+#         designated_basin (str, optional): Designated basin to query for groundwater geophysicallog wells. Defaults to None.
+#         division (str, optional): Division to query for groundwater geophysicallog wells. Defaults to None.
+#         management_district (str, optional): Management district to query for groundwater geophysicallog wells. Defaults to None.
+#         water_district (str, optional): Water district to query for groundwater geophysicallog wells. Defaults to None.
+#         wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
 
-    Returns:
-        pandas dataframe object: dataframe of groundwater geophysicallog wells
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of groundwater geophysicallog wells
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/wells/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/wells/?"
 
-    # if county is given, make sure it is separated by "+" and all uppercase 
-    if county is not None:
-        county = county.replace(" ", "+")
-        county = county.upper()
+#     # if county is given, make sure it is separated by "+" and all uppercase 
+#     if county is not None:
+#         county = county.replace(" ", "+")
+#         county = county.upper()
 
-    # if management_district is given, make sure it is separated by "+" and all uppercase 
-    if management_district is not None:
-        management_district = management_district.replace(" ", "+")
-        management_district = management_district.upper()
+#     # if management_district is given, make sure it is separated by "+" and all uppercase 
+#     if management_district is not None:
+#         management_district = management_district.replace(" ", "+")
+#         management_district = management_district.upper()
 
-    # if designated_basin is given, make sure it is separated by "+" and all uppercase 
-    if designated_basin is not None:
-        designated_basin = designated_basin.replace(" ", "+")
-        designated_basin = designated_basin.upper()
+#     # if designated_basin is given, make sure it is separated by "+" and all uppercase 
+#     if designated_basin is not None:
+#         designated_basin = designated_basin.replace(" ", "+")
+#         designated_basin = designated_basin.upper()
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving groundwater geophysicallog wells data")
+#     print("Retrieving groundwater geophysicallog wells data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
         
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}' 
-            f'&wellId={wellid or ""}'
-            f'&division={division or ""}' 
-            f'&waterDistrict={water_district or ""}' 
-            f'&designatedBasin={designated_basin or ""}' 
-            f'&managementDistrict={management_district or ""}' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}' 
+#             f'&wellId={wellid or ""}'
+#             f'&division={division or ""}' 
+#             f'&waterDistrict={water_district or ""}' 
+#             f'&designatedBasin={designated_basin or ""}' 
+#             f'&managementDistrict={management_district or ""}' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_gw_gplogs_geologpicks(
-    wellid              = None,
-    api_key             = None
-    ):
-    """Return Groundwater Geophysical Log picks by well ID
+# def get_gw_gplogs_geologpicks(
+#     wellid              = None,
+#     api_key             = None
+#     ):
+#     """Return Groundwater Geophysical Log picks by well ID
 
-    Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysical log picks for the given well ID.
+#     Make a request to the groundwater/geophysicallogs/wells endpoint to retrieve groundwater geophysical log picks for the given well ID.
     
-    Args:
-        wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
+#     Args:
+#         wellid (str, optional): Well ID of a groundwater geophysicallog wells. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS.
 
-    Returns:
-        pandas dataframe object: dataframe of groundwater geophysical log picks
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of groundwater geophysical log picks
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/geoplogpicks/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/groundwater/geophysicallogs/geoplogpicks/?"
 
-    # If no well ID is provided
-    if wellid is None:
-        return print("Invalid 'wellid' parameter")
+#     # If no well ID is provided
+#     if wellid is None:
+#         return print("Invalid 'wellid' parameter")
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving groundwater geophysical log picks data")
+#     print("Retrieving groundwater geophysical log picks data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wellId={wellid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&wellId={wellid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_reference_tbl(
-    table_name = None,
-    api_key    = None
-    ):
-    """Return Reference Table reference table
+# def get_reference_tbl(
+#     table_name = None,
+#     api_key    = None
+#     ):
+#     """Return Reference Table reference table
     
-    Makes requests to the /referencetables/ endpoints and returns helpful reference tables. Reference tables can help identify valid inputs for querying CDSS API resources using cdsspy.  
-    For more detailed information visit: https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml.
+#     Makes requests to the /referencetables/ endpoints and returns helpful reference tables. Reference tables can help identify valid inputs for querying CDSS API resources using cdsspy.  
+#     For more detailed information visit: https://dwr.state.co.us/rest/get/help#Datasets&#ReferenceTablesController&#gettingstarted&#jsonxml.
     
-    Args:
-        table_name (str, optional): name of the reference table to return. Must be one of:
-            ("county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"). Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         table_name (str, optional): name of the reference table to return. Must be one of:
+#             ("county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"). Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     
-    Returns:
-        pandas dataframe: dataframe of CDSS reference tables
-    """
-    # list of valid parameters
-    tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
+#     Returns:
+#         pandas dataframe: dataframe of CDSS reference tables
+#     """
+#     # list of valid parameters
+#     tbl_lst = ["county", "waterdistricts", "waterdivisions", "designatedbasins", "managementdistricts", "telemetryparams", "climateparams", "divrectypes", "flags"]
 
-    # if parameter is not in list of valid parameters
-    if table_name not in tbl_lst:
-        raise ValueError("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
+#     # if parameter is not in list of valid parameters
+#     if table_name not in tbl_lst:
+#         raise ValueError("Invalid `table_name` argument \nPlease enter one of the following valid table names: \ncounty\nwaterdistricts\nwaterdivisions\ndesignatedbasins\nmanagementdistricts\ntelemetryparams\nclimateparams\ndivrectypes\nflags")
 
-    # retrieve county reference table
-    if table_name == "county":
-        ref_table = _get_ref_county(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve county reference table
+#     if table_name == "county":
+#         ref_table = _get_ref_county(
+#             api_key = api_key
+#             )
+#         return ref_table
     
-    # retrieve water districts reference table
-    if table_name == "waterdistricts":
-        ref_table = _get_ref_waterdistricts(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve water districts reference table
+#     if table_name == "waterdistricts":
+#         ref_table = _get_ref_waterdistricts(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve water divisions reference table
-    if table_name == "waterdivisions":
-        ref_table = _get_ref_waterdivisions(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve water divisions reference table
+#     if table_name == "waterdivisions":
+#         ref_table = _get_ref_waterdivisions(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve management districts reference table
-    if table_name == "managementdistricts":
-        ref_table = _get_ref_managementdistricts(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve management districts reference table
+#     if table_name == "managementdistricts":
+#         ref_table = _get_ref_managementdistricts(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve designated basins reference table
-    if table_name == "designatedbasins":
-        ref_table = _get_ref_designatedbasins(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve designated basins reference table
+#     if table_name == "designatedbasins":
+#         ref_table = _get_ref_designatedbasins(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve telemetry station parameters reference table
-    if table_name == "telemetryparams":
-        ref_table = _get_ref_telemetry_params(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve telemetry station parameters reference table
+#     if table_name == "telemetryparams":
+#         ref_table = _get_ref_telemetry_params(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve climate station parameters reference table
-    if table_name == "climateparams":
-        ref_table = _get_ref_climate_params(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve climate station parameters reference table
+#     if table_name == "climateparams":
+#         ref_table = _get_ref_climate_params(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve diversion record types reference table
-    if table_name == "divrectypes":
-        ref_table = _get_ref_divrectypes(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve diversion record types reference table
+#     if table_name == "divrectypes":
+#         ref_table = _get_ref_divrectypes(
+#             api_key = api_key
+#             )
+#         return ref_table
 
-    # retrieve station flags reference table
-    if table_name == "flags":
-        ref_table = _get_ref_stationflags(
-            api_key = api_key
-            )
-        return ref_table
+#     # retrieve station flags reference table
+#     if table_name == "flags":
+#         ref_table = _get_ref_stationflags(
+#             api_key = api_key
+#             )
+#         return ref_table
         
-def _get_ref_county(
-    county  = None, 
-    api_key = None
-    ):
-    """Return county reference table
+# def _get_ref_county(
+#     county  = None, 
+#     api_key = None
+#     ):
+#     """Return county reference table
 
-    Args:
-        county (str, optional): County to query, if no county is given, entire county dataframe is returned. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         county (str, optional): County to query, if no county is given, entire county dataframe is returned. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of Colorado counties
-    """
+#     Returns:
+#         pandas dataframe: dataframe of Colorado counties
+#     """
     
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/county/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/county/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving reference table: Counties")
+#     print("Retrieving reference table: Counties")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-# _get_ref_county()
-# get_reference_tbl("county")
+# # _get_ref_county()
+# # get_reference_tbl("county")
 
-def _get_ref_waterdistricts(
-    division       = None, 
-    water_district = None,
-    api_key        = None
-    ):
-    """Return water districts reference table
+# def _get_ref_waterdistricts(
+#     division       = None, 
+#     water_district = None,
+#     api_key        = None
+#     ):
+#     """Return water districts reference table
 
-    Args:
-        division (str, optional):  (optional) indicating the division to query, if no division is given, dataframe of all water districts is returned. Defaults to None.
-        water_district (str, optional):  (optional) indicating the water district to query, if no water district is given, dataframe of all water districts is returned. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         division (str, optional):  (optional) indicating the division to query, if no division is given, dataframe of all water districts is returned. Defaults to None.
+#         water_district (str, optional):  (optional) indicating the water district to query, if no water district is given, dataframe of all water districts is returned. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of Colorado water_districts
-    """
+#     Returns:
+#         pandas dataframe: dataframe of Colorado water_districts
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/waterdistrict/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/waterdistrict/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving reference table: Water districts")
+#     print("Retrieving reference table: Water districts")
     
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&division={division or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&division={division or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_waterdivisions(
-    division       = None, 
-    api_key        = None
-    ):
-    """Return water divisions reference table
+# def _get_ref_waterdivisions(
+#     division       = None, 
+#     api_key        = None
+#     ):
+#     """Return water divisions reference table
 
-    Args:
-        division (str, optional): Division to query, if no division is given, dataframe of all water divisions is returned. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         division (str, optional): Division to query, if no division is given, dataframe of all water divisions is returned. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of Colorado water divisions
-    """
+#     Returns:
+#         pandas dataframe: dataframe of Colorado water divisions
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/waterdivision/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/waterdivision/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving reference table: Water divisions")
+#     print("Retrieving reference table: Water divisions")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&division={division or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&division={division or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_managementdistricts(
-    management_district   = None, 
-    api_key               = None
-    ):
-    """Return management districts reference table
+# def _get_ref_managementdistricts(
+#     management_district   = None, 
+#     api_key               = None
+#     ):
+#     """Return management districts reference table
     
-    Args:
-        management_district (str, optional): Indicating the management district to query, if no management district is given, dataframe of all management districts is returned Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         management_district (str, optional): Indicating the management district to query, if no management district is given, dataframe of all management districts is returned Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of Colorado management districts
-    """
+#     Returns:
+#         pandas dataframe: dataframe of Colorado management districts
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/managementdistrict/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/managementdistrict/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving reference table: Management districts")
+#     print("Retrieving reference table: Management districts")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&managementDistrictName={management_district or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&managementDistrictName={management_district or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_designatedbasins(
-    designated_basin   = None, 
-    api_key            = None
-    ):
-    """Return designated basin reference table
+# def _get_ref_designatedbasins(
+#     designated_basin   = None, 
+#     api_key            = None
+#     ):
+#     """Return designated basin reference table
     
-    Args:
-        designated_basin (str, optional): Indicating the  designated basin to query character, if no designated basin is given, all designated basins dataframe is returned. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         designated_basin (str, optional): Indicating the  designated basin to query character, if no designated basin is given, all designated basins dataframe is returned. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of Colorado designated basins
-    """
+#     Returns:
+#         pandas dataframe: dataframe of Colorado designated basins
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/designatedbasin/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/designatedbasin/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving reference table: Designated basins")
+#     print("Retrieving reference table: Designated basins")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&designatedBasinName={designated_basin or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&designatedBasinName={designated_basin or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_telemetry_params(
-    param    = None, 
-    api_key  = None
-    ):
-    """Return telemetry station parameter reference table
+# def _get_ref_telemetry_params(
+#     param    = None, 
+#     api_key  = None
+#     ):
+#     """Return telemetry station parameter reference table
     
-    Args:
-        param (str, optional): Indicating the parameter to query character, if no parameter is given, all parameter dataframe is returned Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         param (str, optional): Indicating the parameter to query character, if no parameter is given, all parameter dataframe is returned Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of telemetry station parameter reference table
-    """
+#     Returns:
+#         pandas dataframe: dataframe of telemetry station parameter reference table
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/telemetryparams/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/telemetryparams/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print("Retrieving reference table: Telemetry station parameters")
+#     print("Retrieving reference table: Telemetry station parameters")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json'
-            f'&parameter={param or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json'
+#             f'&parameter={param or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_climate_params(
-    param      = None, 
-    api_key    = None
-    ):
-    """Return climate station parameter reference table
+# def _get_ref_climate_params(
+#     param      = None, 
+#     api_key    = None
+#     ):
+#     """Return climate station parameter reference table
     
-    Args:
-        param (str, optional): Indicating the climate station parameter to query, if no parameter is given, all parameter dataframe is returned. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         param (str, optional): Indicating the climate station parameter to query, if no parameter is given, all parameter dataframe is returned. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of climate station parameter reference table
-    """
+#     Returns:
+#         pandas dataframe: dataframe of climate station parameter reference table
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/climatestationmeastype/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/climatestationmeastype/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print("Retrieving reference table: Climate station parameters")
+#     print("Retrieving reference table: Climate station parameters")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json'
-            f'&measType={param or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json'
+#             f'&measType={param or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_divrectypes(
-    divrectype   = None, 
-    api_key      = None
-    ):
-    """Return Diversion Record Types reference table
+# def _get_ref_divrectypes(
+#     divrectype   = None, 
+#     api_key      = None
+#     ):
+#     """Return Diversion Record Types reference table
     
-    Args:
-        divrectype (str, optional): Diversion record type to query, if no divrectype is given, a dataframe with all diversion record types is returned. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         divrectype (str, optional): Diversion record type to query, if no divrectype is given, a dataframe with all diversion record types is returned. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of diversion record types reference table
-    """
+#     Returns:
+#         pandas dataframe: dataframe of diversion record types reference table
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/divrectypes/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/divrectypes/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print("Retrieving reference table: Diversion record types")
+#     print("Retrieving reference table: Diversion record types")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json'
-            f'&divRecType={divrectype or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json'
+#             f'&divRecType={divrectype or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_ref_stationflags(
-    flag    = None, 
-    api_key = None
-    ):
-    """Return Station Flag reference table
+# def _get_ref_stationflags(
+#     flag    = None, 
+#     api_key = None
+#     ):
+#     """Return Station Flag reference table
     
-    Args:
-        flag (str, optional): short code for the flag to query, if no flag is given, a dataframe with all flags is returned. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         flag (str, optional): short code for the flag to query, if no flag is given, a dataframe with all flags is returned. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe: dataframe of diversion record types reference table
-    """
+#     Returns:
+#         pandas dataframe: dataframe of diversion record types reference table
+#     """
 
-    # get input args
-    input_args = locals()
+#     # get input args
+#     input_args = locals()
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/referencetables/stationflags/?"
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print("Retrieving reference table: Station flags")
+#     print("Retrieving reference table: Station flags")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json'
-            f'&flag={flag or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json'
+#             f'&flag={flag or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_structures_divrecday(
-    wdid          = None,
-    wc_identifier = None,
-    start_date    = None,
-    end_date      = None,
-    api_key       = None
-    ):
-    """Return Structure Daily Diversion/Release Records
+# def _get_structures_divrecday(
+#     wdid          = None,
+#     wc_identifier = None,
+#     start_date    = None,
+#     end_date      = None,
+#     api_key       = None
+#     ):
+#     """Return Structure Daily Diversion/Release Records
 
-    Make a request to the api/v2/structures/divrec/divrecday/ endpoint to retrieve daily structure diversion/release data for a specified WDID within a specified date range.
+#     Make a request to the api/v2/structures/divrec/divrecday/ endpoint to retrieve daily structure diversion/release data for a specified WDID within a specified date range.
 
-    Args:
-        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+#         wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of daily structure diversion/releases records 
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of daily structure diversion/releases records 
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecday/?"
 
-    # correctly format wc_identifier, if NULL, return "*diversion*"
-    wc_id = utils._align_wcid(
-        x       = wc_identifier,
-        default = "*diversion*"
-        )
+#     # correctly format wc_identifier, if NULL, return "*diversion*"
+#     wc_id = utils._align_wcid(
+#         x       = wc_identifier,
+#         default = "*diversion*"
+#         )
     
-    # collapse list, tuple, vector of wdid into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of wdid into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # print message
-    if wc_identifier is None: 
-        print(f'Retrieving daily divrec data (diversion)')
-    else:
-        print(f'Retrieving daily divrec data ({wc_identifier})')
+#     # print message
+#     if wc_identifier is None: 
+#         print(f'Retrieving daily divrec data (diversion)')
+#     else:
+#         print(f'Retrieving daily divrec data ({wc_identifier})')
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier={wc_id or ""}'
-            f'&min-dataMeasDate={start_date or ""}'
-            f'&max-dataMeasDate={end_date or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&wcIdentifier={wc_id or ""}'
+#             f'&min-dataMeasDate={start_date or ""}'
+#             f'&max-dataMeasDate={end_date or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
 
-def _get_structures_divrecmonth(
-    wdid          = None,
-    wc_identifier = None,
-    start_date    = None,
-    end_date      = None,
-    api_key       = None
-    ):
-    """Return Structure Monthly Diversion/Release Records
+# def _get_structures_divrecmonth(
+#     wdid          = None,
+#     wc_identifier = None,
+#     start_date    = None,
+#     end_date      = None,
+#     api_key       = None
+#     ):
+#     """Return Structure Monthly Diversion/Release Records
 
-    Make a request to the api/v2/structures/divrec/divrecmonth/ endpoint to retrieve monthly structure diversion/release data for a specified WDID within a specified date range.
+#     Make a request to the api/v2/structures/divrec/divrecmonth/ endpoint to retrieve monthly structure diversion/release data for a specified WDID within a specified date range.
 
-    Args:
-        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+#         wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of monthly structure diversion/releases records 
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of monthly structure diversion/releases records 
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecmonth/?"
 
-    # correctly format wc_identifier, if NULL, return "*diversion*"
-    wc_id = utils._align_wcid(
-        x       = wc_identifier,
-        default = "*diversion*"
-        )
+#     # correctly format wc_identifier, if NULL, return "*diversion*"
+#     wc_id = utils._align_wcid(
+#         x       = wc_identifier,
+#         default = "*diversion*"
+#         )
     
-    # collapse list, tuple, vector of wdid into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of wdid into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # print message
-    if wc_identifier is None: 
-        print(f'Retrieving monthly divrec data (diversion)')
-    else:
-        print(f'Retrieving monthly divrec data ({wc_identifier})')
+#     # print message
+#     if wc_identifier is None: 
+#         print(f'Retrieving monthly divrec data (diversion)')
+#     else:
+#         print(f'Retrieving monthly divrec data ({wc_identifier})')
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier={wc_id or ""}'
-            f'&min-dataMeasDate={start_date or ""}'
-            f'&max-dataMeasDate={end_date or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&wcIdentifier={wc_id or ""}'
+#             f'&min-dataMeasDate={start_date or ""}'
+#             f'&max-dataMeasDate={end_date or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _get_structures_divrecyear(
-    wdid          = None,
-    wc_identifier = None,
-    start_date    = None,
-    end_date      = None,
-    api_key       = None
-    ):
-    """Return Structure Annual Diversion/Release Records
+# def _get_structures_divrecyear(
+#     wdid          = None,
+#     wc_identifier = None,
+#     start_date    = None,
+#     end_date      = None,
+#     api_key       = None
+#     ):
+#     """Return Structure Annual Diversion/Release Records
 
-    Make a request to the structures/divrec/divrecyear/ endpoint to retrieve annual structure diversion/release data for a specified WDID within a specified date range.
+#     Make a request to the structures/divrec/divrecyear/ endpoint to retrieve annual structure diversion/release data for a specified WDID within a specified date range.
 
-    Args:
-        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+#         wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of annual structure diversion/releases records 
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of annual structure diversion/releases records 
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "wc_identifier", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/divrecyear/?"
 
-    # correctly format wc_identifier, if NULL, return "*diversion*"
-    wc_id = utils._align_wcid(
-        x       = wc_identifier,
-        default = "*diversion*"
-        )
+#     # correctly format wc_identifier, if NULL, return "*diversion*"
+#     wc_id = utils._align_wcid(
+#         x       = wc_identifier,
+#         default = "*diversion*"
+#         )
 
-    # collapse list, tuple, vector of wdid into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of wdid into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # print message
-    if wc_identifier is None: 
-        print(f'Retrieving yearly divrec data (diversion)')
-    else:
-        print(f'Retrieving yearly divrec data ({wc_identifier})')
+#     # print message
+#     if wc_identifier is None: 
+#         print(f'Retrieving yearly divrec data (diversion)')
+#     else:
+#         print(f'Retrieving yearly divrec data ({wc_identifier})')
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&wcIdentifier={wc_id or ""}'
-            f'&min-dataMeasDate={start_date or ""}'
-            f'&max-dataMeasDate={end_date or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&wcIdentifier={wc_id or ""}'
+#             f'&min-dataMeasDate={start_date or ""}'
+#             f'&max-dataMeasDate={end_date or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def get_structures_divrec_ts(
-    wdid          = None,
-    wc_identifier = None,
-    start_date    = None,
-    end_date      = None,
-    timescale     = None, 
-    api_key       = None
-    ):
+# def get_structures_divrec_ts(
+#     wdid          = None,
+#     wc_identifier = None,
+#     start_date    = None,
+#     end_date      = None,
+#     timescale     = None, 
+#     api_key       = None
+#     ):
 
-    """Return diversion/releases record data for administrative structures
+#     """Return diversion/releases record data for administrative structures
 
-    Make a request to the CDSS API /structures/divrec endpoints to get diversion/releases time series data for administrative structures by wdid, within a given date range (start and end dates) and at a specified temporal resolution.     
+#     Make a request to the CDSS API /structures/divrec endpoints to get diversion/releases time series data for administrative structures by wdid, within a given date range (start and end dates) and at a specified temporal resolution.     
 
-    Args:
-        wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
-        wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): timestep of the time series data to return, either "day", "month", or "year". Defaults to None and will request daily time series.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str, optional):  tuple or list of WDIDs code of structure. Defaults to None.
+#         wc_identifier (str, optional):  series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. Provide "diversion" or "release" to retrieve diversion/release records. Default is None which will return diversions records.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         timescale (str, optional): timestep of the time series data to return, either "day", "month", or "year". Defaults to None and will request daily time series.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of structure diversion/releases time series data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of structure diversion/releases time series data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "wc_identifier", "start_date", "end_date", "timescale"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "wc_identifier", "start_date", "end_date", "timescale"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    # lists of valid timesteps
-    day_lst       = ['day', 'days', 'daily', 'd']
-    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
-    year_lst      = ['year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
-    timescale_lst = day_lst + month_lst + year_lst
+#     # lists of valid timesteps
+#     day_lst       = ['day', 'days', 'daily', 'd']
+#     month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+#     year_lst      = ['year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+#     timescale_lst = day_lst + month_lst + year_lst
 
-    # if timescale is None, then defaults to "day"
-    if timescale is None: 
-        timescale = "day"
+#     # if timescale is None, then defaults to "day"
+#     if timescale is None: 
+#         timescale = "day"
         
-    # if parameter is NOT in list of valid parameters
-    if timescale not in timescale_lst:
-        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
+#     # if parameter is NOT in list of valid parameters
+#     if timescale not in timescale_lst:
+#         raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
 
-    # request daily structure divrec time series data
-    if timescale in day_lst:    
-        divrec_df = _get_structures_divrecday(
-            wdid          = wdid,
-            wc_identifier = wc_identifier,
-            start_date    = start_date,
-            end_date      = end_date,
-            api_key       = api_key
-            )
+#     # request daily structure divrec time series data
+#     if timescale in day_lst:    
+#         divrec_df = _get_structures_divrecday(
+#             wdid          = wdid,
+#             wc_identifier = wc_identifier,
+#             start_date    = start_date,
+#             end_date      = end_date,
+#             api_key       = api_key
+#             )
 
-        # return daily climate time series data
-        return divrec_df
+#         # return daily climate time series data
+#         return divrec_df
 
-    # request monthly structure divrec time series data
-    if timescale in month_lst:    
+#     # request monthly structure divrec time series data
+#     if timescale in month_lst:    
 
-        divrec_df = _get_structures_divrecmonth(
-            wdid          = wdid,
-            wc_identifier = wc_identifier,
-            start_date    = start_date,
-            end_date      = end_date,
-            api_key       = api_key
-            )
+#         divrec_df = _get_structures_divrecmonth(
+#             wdid          = wdid,
+#             wc_identifier = wc_identifier,
+#             start_date    = start_date,
+#             end_date      = end_date,
+#             api_key       = api_key
+#             )
 
-        # return monthly structure divrec time series data  
-        return divrec_df
+#         # return monthly structure divrec time series data  
+#         return divrec_df
 
-    # request yearly structure divrec time series data
-    if timescale in year_lst:    
+#     # request yearly structure divrec time series data
+#     if timescale in year_lst:    
 
-        divrec_df = _get_structures_divrecyear(
-            wdid          = wdid,
-            wc_identifier = wc_identifier,
-            start_date    = start_date,
-            end_date      = end_date,
-            api_key       = api_key
-            )
+#         divrec_df = _get_structures_divrecyear(
+#             wdid          = wdid,
+#             wc_identifier = wc_identifier,
+#             start_date    = start_date,
+#             end_date      = end_date,
+#             api_key       = api_key
+#             )
 
-        # return yearly structure divrec time series data
-        return divrec_df
+#         # return yearly structure divrec time series data
+#         return divrec_df
 
-def get_structures_stage_ts(
-    wdid          = None,
-    start_date    = None,
-    end_date      = None,
-    api_key       = None
-    ):
-    """Return stage/volume record data for administrative structures
+# def get_structures_stage_ts(
+#     wdid          = None,
+#     start_date    = None,
+#     end_date      = None,
+#     api_key       = None
+#     ):
+#     """Return stage/volume record data for administrative structures
 
-    Make a request to the structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
+#     Make a request to the structures/divrec/stagevolume/ endpoint to retrieve structure stage/volume data for a specified WDID within a specified date range.
 
-    Args:
-        wdid (str):  WDID code of structure. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str):  WDID code of structure. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):   optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of daily structure stage/volume records 
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of daily structure stage/volume records 
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/stagevolume/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/stagevolume/?"
 
-    # collapse list, tuple, vector of wdid into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of wdid into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&min-dataMeasDate={start_date or ""}'
-            f'&max-dataMeasDate={end_date or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&min-dataMeasDate={start_date or ""}'
+#             f'&max-dataMeasDate={end_date or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def get_structures(
-    aoi            = None,
-    radius         = None,
-    county         = None,
-    division       = None,
-    gnis_id        = None,
-    water_district = None,
-    wdid           = None,
-    api_key        = None
-):
-    """Return list of administrative structures
+# def get_structures(
+#     aoi            = None,
+#     radius         = None,
+#     county         = None,
+#     division       = None,
+#     gnis_id        = None,
+#     water_district = None,
+#     wdid           = None,
+#     api_key        = None
+# ):
+#     """Return list of administrative structures
 
-    Make a request to the api/v2/structures endpoint to locate administrative structures via a spatial search or by division, county, water_district, GNIS, or WDID.
+#     Make a request to the api/v2/structures endpoint to locate administrative structures via a spatial search or by division, county, water_district, GNIS, or WDID.
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        county (str, optional): Indicating the county to query. Defaults to None.
-        division (int, str, optional): Indicating the water division to query. Defaults to None.
-        gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
-        water_district (int, str, optional): Indicating the water district to query. Defaults to None.
-        wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         county (str, optional): Indicating the county to query. Defaults to None.
+#         division (int, str, optional): Indicating the water division to query. Defaults to None.
+#         gnis_id (str, optional): Water source - Geographic Name Information System ID (GNIS ID). Defaults to None.
+#         water_district (int, str, optional): Indicating the water district to query. Defaults to None.
+#         wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of administrative structures
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of administrative structures
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/?"
 
-    # convert numeric division to string
-    if type(division) == int or type(division) == float:
-        division = str(division)
+#     # convert numeric division to string
+#     if type(division) == int or type(division) == float:
+#         division = str(division)
 
-    # convert numeric water_district to string
-    if type(water_district) == int or type(water_district) == float:
-        water_district = str(water_district)
+#     # convert numeric water_district to string
+#     if type(water_district) == int or type(water_district) == float:
+#         water_district = str(water_district)
 
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # collapse WDID list, tuple, vector of site_id into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse WDID list, tuple, vector of site_id into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
         
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}'
-            f'&division={division or ""}'
-            f'&gnisId={gnis_id or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&wdid={wdid or ""}'
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}'
+#             f'&division={division or ""}'
+#             f'&gnisId={gnis_id or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
         
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
     
-    return data_df
+#     return data_df
 
-def get_water_classes(
-        wdid                = None,
-        county              = None,
-        division            = None,
-        water_district      = None,
-        wc_identifier       = None,
-        aoi                 = None,
-        radius              = None,
-        gnis_id             = None,
-        start_date          = None,
-        end_date            = None,
-        divrectype          = None,
-        ciu_code            = None,
-        timestep            = None,
-        api_key             = None
-        ):
-    """Return list of waterclasses
+# def get_water_classes(
+#         wdid                = None,
+#         county              = None,
+#         division            = None,
+#         water_district      = None,
+#         wc_identifier       = None,
+#         aoi                 = None,
+#         radius              = None,
+#         gnis_id             = None,
+#         start_date          = None,
+#         end_date            = None,
+#         divrectype          = None,
+#         ciu_code            = None,
+#         timestep            = None,
+#         api_key             = None
+#         ):
+#     """Return list of waterclasses
 
-    Make a request to the /structures/divrec/waterclasses endpoint to identify water classes via a spatial search or by division, county, water_district, GNIS, or WDID.
+#     Make a request to the /structures/divrec/waterclasses endpoint to identify water classes via a spatial search or by division, county, water_district, GNIS, or WDID.
 
-    Args:
-        wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
-        county (str, optional): county to query. Defaults to None.
-        division (str, int, optional): water division to query. Defaults to None.
-        water_district (str, int, optional): water district to query. Defaults to None.
-        wc_identifier (_type_, optional): series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. The Water Class, combined with a daily, monthly or annual volume, constitutes a Diversion Record. Defaults to None.
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        gnis_id (str, optional): water source - Geographic Name Information System ID. Defaults to None.
-        start_date (str, optional): date of first measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
-        end_date (str, optional): date of last measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
-        divrectype (str, optional): type of record: "DivComment", "DivTotal", "RelComment", "RelTolal", "StageVolume", or "WaterClass".. Defaults to None.
-        ciu_code (str, optional): current in use code of structure. Defaults to None.
-        timestep (str, optional): timestep, one of "day", "month", "year". Defaults to None which returns a daily timestep.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         wdid (str, tuple or list, optional): WDID(s) code of structure. Defaults to None.
+#         county (str, optional): county to query. Defaults to None.
+#         division (str, int, optional): water division to query. Defaults to None.
+#         water_district (str, int, optional): water district to query. Defaults to None.
+#         wc_identifier (_type_, optional): series of water class codes that provide the location of the diversion, the SOURCE of water, the USE of the water and the administrative operation required to make the diversion. The Water Class, combined with a daily, monthly or annual volume, constitutes a Diversion Record. Defaults to None.
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         gnis_id (str, optional): water source - Geographic Name Information System ID. Defaults to None.
+#         start_date (str, optional): date of first measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
+#         end_date (str, optional): date of last measurement in the well's period of record (YYYY-MM-DD). Defaults to None.
+#         divrectype (str, optional): type of record: "DivComment", "DivTotal", "RelComment", "RelTolal", "StageVolume", or "WaterClass".. Defaults to None.
+#         ciu_code (str, optional): current in use code of structure. Defaults to None.
+#         timestep (str, optional): timestep, one of "day", "month", "year". Defaults to None which returns a daily timestep.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of water class data for administrative structures
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of water class data for administrative structures
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date", "aoi", "radius",
-                    "ciu_code", "divrectype", "gnis_id", "timestep"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date", "aoi", "radius",
+#                     "ciu_code", "divrectype", "gnis_id", "timestep"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/waterclasses/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/structures/divrec/waterclasses/?"
 
-    # correctly format wc_identifier, if NULL, return "*diversion*"
-    wc_id = utils._align_wcid(
-        x       = wc_identifier,
-        default = None
-        )
+#     # correctly format wc_identifier, if NULL, return "*diversion*"
+#     wc_id = utils._align_wcid(
+#         x       = wc_identifier,
+#         default = None
+#         )
     
-    # collapse list, tuple, vector of wdid into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse list, tuple, vector of wdid into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
     
-    # if start_date is None, return None
-    if start_date is None:
-        start = None
-    else:
-        # parse start_date into query string format
-        start = utils._parse_date(
-            date   = start_date,
-            start  = True,
-            format = "%m-%d-%Y",
-            sep    = "%2F"
-        )
+#     # if start_date is None, return None
+#     if start_date is None:
+#         start = None
+#     else:
+#         # parse start_date into query string format
+#         start = utils._parse_date(
+#             date   = start_date,
+#             start  = True,
+#             format = "%m-%d-%Y",
+#             sep    = "%2F"
+#         )
 
-    # if end_date is None, return None
-    if end_date is None:
-        end = None
-    else:
-        # parse start_date into query string format
-        end = utils._parse_date(
-            date   = end_date,
-            start  = False,
-            format = "%m-%d-%Y",
-            sep    = "%2F"
-        )
+#     # if end_date is None, return None
+#     if end_date is None:
+#         end = None
+#     else:
+#         # parse start_date into query string format
+#         end = utils._parse_date(
+#             date   = end_date,
+#             start  = False,
+#             format = "%m-%d-%Y",
+#             sep    = "%2F"
+#         )
 
-    # collapse WDID list, tuple, vector of site_id into query formatted string
-    wdid = utils._collapse_vector(
-        vect = wdid, 
-        sep  = "%2C+"
-        )
+#     # collapse WDID list, tuple, vector of site_id into query formatted string
+#     wdid = utils._collapse_vector(
+#         vect = wdid, 
+#         sep  = "%2C+"
+#         )
     
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # if county is given, make sure it is separated by "+" and all uppercase 
-    if county is not None:
-        county = county.replace(" ", "+")
-        county = county.upper()
+#     # if county is given, make sure it is separated by "+" and all uppercase 
+#     if county is not None:
+#         county = county.replace(" ", "+")
+#         county = county.upper()
     
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df   = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df   = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # print message
-    print("Retrieving structure water classes")
+#     # print message
+#     print("Retrieving structure water classes")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
         
-        # create query URL string
-        url = (
-            f'{base}'
-            f'timestep={timestep or ""}'
-            f'format=json&dateFormat=spaceSepToSeconds'
-            f'&ciuCode={ciu_code or ""}'
-            f'&county={county or ""}'
-            f'&division={division or ""}'
-            f'&divrectype={divrectype or ""}'
-            f'&min-porEnd={end or ""}'
-            f'&min-porStart={start or ""}'
-            f'&gnisId={gnis_id or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&wcIdentifier={wc_id or ""}'
-            f'&wdid={wdid or ""}'
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}'
+#             f'timestep={timestep or ""}'
+#             f'format=json&dateFormat=spaceSepToSeconds'
+#             f'&ciuCode={ciu_code or ""}'
+#             f'&county={county or ""}'
+#             f'&division={division or ""}'
+#             f'&divrectype={divrectype or ""}'
+#             f'&min-porEnd={end or ""}'
+#             f'&min-porStart={start or ""}'
+#             f'&gnisId={gnis_id or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&wcIdentifier={wc_id or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_sw_stations(
-    aoi                 = None,
-    radius              = None,
-    abbrev              = None,
-    county              = None,
-    division            = None,
-    station_name        = None,
-    usgs_id             = None,
-    water_district      = None,
-    api_key             = None
-    ):
-    """Return Surface Water Station information
+# def get_sw_stations(
+#     aoi                 = None,
+#     radius              = None,
+#     abbrev              = None,
+#     county              = None,
+#     division            = None,
+#     station_name        = None,
+#     usgs_id             = None,
+#     water_district      = None,
+#     api_key             = None
+#     ):
+#     """Return Surface Water Station information
     
-    Make a request to the /surfacewater/surfacewaterstations endpoint to locate surface water stations via a spatial search, or by station abbreviation, county, division, station name, USGS ID or water_district.  
+#     Make a request to the /surfacewater/surfacewaterstations endpoint to locate surface water stations via a spatial search, or by station abbreviation, county, division, station name, USGS ID or water_district.  
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        abbrev (str, list, tuple, optional): surface water station abbreviation. Defaults to None.
-        county (str, optional): County to query for surface water stations. Defaults to None.
-        division (int, str, optional):  Water division to query for surface water stations. Defaults to None.
-        station_name (str, optional): surface water station name. Defaults to None.
-        usgs_id (str, tuple or list , optional): USGS IDs. Defaults to None.
-        water_district (int, str, optional): Water district to query for surface water stations. Defaults to None.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         abbrev (str, list, tuple, optional): surface water station abbreviation. Defaults to None.
+#         county (str, optional): County to query for surface water stations. Defaults to None.
+#         division (int, str, optional):  Water division to query for surface water stations. Defaults to None.
+#         station_name (str, optional): surface water station name. Defaults to None.
+#         usgs_id (str, tuple or list , optional): USGS IDs. Defaults to None.
+#         water_district (int, str, optional): Water district to query for surface water stations. Defaults to None.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
     
-    Returns:
-        pandas dataframe object: dataframe of surface water station data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of surface water station data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # collapse abbrev list, tuple, vector of abbrev into query formatted string
-    abbrev = utils._collapse_vector(
-        vect = abbrev, 
-        sep  = "%2C+"
-        )
+#     # collapse abbrev list, tuple, vector of abbrev into query formatted string
+#     abbrev = utils._collapse_vector(
+#         vect = abbrev, 
+#         sep  = "%2C+"
+#         )
 
-    # collapse usgs_id list, tuple, vector of usgs_id into query formatted string
-    usgs_id = utils._collapse_vector(
-        vect = usgs_id, 
-        sep  = "%2C+"
-        )
+#     # collapse usgs_id list, tuple, vector of usgs_id into query formatted string
+#     usgs_id = utils._collapse_vector(
+#         vect = usgs_id, 
+#         sep  = "%2C+"
+#         )
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewaterstations/?"
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving surface water station data")
+#     print("Retrieving surface water station data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}' 
-            f'&county={county or ""}' 
-            f'&division={division or ""}'
-            f'&stationName={station_name or ""}' 
-            f'&usgsSiteId={usgs_id or ""}'
-            f'&waterDistrict={water_district or ""}' 
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}' 
+#             f'&county={county or ""}' 
+#             f'&division={division or ""}'
+#             f'&stationName={station_name or ""}' 
+#             f'&usgsSiteId={usgs_id or ""}'
+#             f'&waterDistrict={water_district or ""}' 
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
 
-    return data_df
+#     return data_df
 
-def _get_sw_ts_day(
-    abbrev              = None,
-    station_number      = None,
-    usgs_id             = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return daily surface water time series data
+# def _get_sw_ts_day(
+#     abbrev              = None,
+#     station_number      = None,
+#     usgs_id             = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return daily surface water time series data
     
-    Make a request to the /surfacewater/surfacewatertsday endpoint to retrieve surface water stations daily time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+#     Make a request to the /surfacewater/surfacewatertsday endpoint to retrieve surface water stations daily time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
     
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (int, str, optional):  surface water station number. Defaults to None.
-        usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+#         station_number (int, str, optional):  surface water station number. Defaults to None.
+#         usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: daily surface water time series data
-    """
+#     Returns:
+#         pandas dataframe object: daily surface water time series data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [abbrev, station_number, usgs_id]):
-    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [abbrev, station_number, usgs_id]):
+#     #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/?"
+#     #  base API URL
+#     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsday/?"
 
-    # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = utils._collapse_vector(
-        vect = abbrev, 
-        sep  = "%2C+"
-        )
+#     # collapse abbreviation list, tuple, vector of site_id into query formatted string
+#     abbrev = utils._collapse_vector(
+#         vect = abbrev, 
+#         sep  = "%2C+"
+#         )
 
-    # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = utils._collapse_vector(
-        vect = usgs_id, 
-        sep  = "%2C+"
-        )
+#     # collapse USGS ID list, tuple, vector of site_id into query formatted string
+#     usgs_id = utils._collapse_vector(
+#         vect = usgs_id, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
     
-    print("Retrieving daily surface water time series")
+#     print("Retrieving daily surface water time series")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}'
-            f'&min-measDate={start_date or ""}'
-            f'&max-measDate={end_date or ""}'
-            f'&stationNum={station_number or ""}'
-            f'&usgsSiteId={usgs_id or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}'
+#             f'&min-measDate={start_date or ""}'
+#             f'&max-measDate={end_date or ""}'
+#             f'&stationNum={station_number or ""}'
+#             f'&usgsSiteId={usgs_id or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # convert measDate columns to 'date' and pd datetime type
-        cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
+#         # convert measDate columns to 'date' and pd datetime type
+#         cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def _get_sw_ts_month(
-    abbrev              = None,
-    station_number      = None,
-    usgs_id             = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return monthly surface water time series data
+# def _get_sw_ts_month(
+#     abbrev              = None,
+#     station_number      = None,
+#     usgs_id             = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return monthly surface water time series data
     
-    Make a request to the /surfacewater/surfacewatertsmonth endpoint to retrieve surface water stations monthly time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+#     Make a request to the /surfacewater/surfacewatertsmonth endpoint to retrieve surface water stations monthly time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
     
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        abbrev (tuple, list, optional):  tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (int, str, optional):  surface water station number. Defaults to None.
-        usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         abbrev (tuple, list, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+#         station_number (int, str, optional):  surface water station number. Defaults to None.
+#         usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: monthly surface water time series data
-    """
+#     Returns:
+#         pandas dataframe object: monthly surface water time series data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [abbrev, station_number, usgs_id]):
-    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [abbrev, station_number, usgs_id]):
+#     #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsmonth/?"
+#     #  base API URL
+#     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertsmonth/?"
 
-    # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = utils._collapse_vector(
-        vect = abbrev, 
-        sep  = "%2C+"
-        )
+#     # collapse abbreviation list, tuple, vector of site_id into query formatted string
+#     abbrev = utils._collapse_vector(
+#         vect = abbrev, 
+#         sep  = "%2C+"
+#         )
 
-    # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = utils._collapse_vector(
-        vect = usgs_id, 
-        sep  = "%2C+"
-        )
+#     # collapse USGS ID list, tuple, vector of site_id into query formatted string
+#     usgs_id = utils._collapse_vector(
+#         vect = usgs_id, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%Y"
+#         )
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True 
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True 
     
-    print("Retrieving monthly surface water time series")
+#     print("Retrieving monthly surface water time series")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}'
-            f'&min-calYear={start_date or ""}'
-            f'&max-calYear={end_date or ""}'
-            f'&stationNum={station_number or ""}'
-            f'&usgsSiteId={usgs_id or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}'
+#             f'&min-calYear={start_date or ""}'
+#             f'&max-calYear={end_date or ""}'
+#             f'&stationNum={station_number or ""}'
+#             f'&usgsSiteId={usgs_id or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def _get_sw_ts_wyear(
-    abbrev              = None,
-    station_number      = None,
-    usgs_id             = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return water year surface water time series data
+# def _get_sw_ts_wyear(
+#     abbrev              = None,
+#     station_number      = None,
+#     usgs_id             = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return water year surface water time series data
 
-    Make a request to the /surfacewater/surfacewatertswateryear endpoint to retrieve surface water stations annual time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
+#     Make a request to the /surfacewater/surfacewatertswateryear endpoint to retrieve surface water stations annual time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates)
 
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (int, str, optional):  surface water station number. Defaults to None.
-        usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+#         station_number (int, str, optional):  surface water station number. Defaults to None.
+#         usgs_id (str, optional):  tuple or list of USGS ID. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional):  API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: annual surface water time series data
-    """
+#     Returns:
+#         pandas dataframe object: annual surface water time series data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [abbrev, station_number, usgs_id]):
-    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [abbrev, station_number, usgs_id]):
+#     #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertswateryear/?"
+#     #  base API URL
+#     base =  "https://dwr.state.co.us/Rest/GET/api/v2/surfacewater/surfacewatertswateryear/?"
 
-    # collapse abbreviation list, tuple, vector of site_id into query formatted string
-    abbrev = utils._collapse_vector(
-        vect = abbrev, 
-        sep  = "%2C+"
-        )
+#     # collapse abbreviation list, tuple, vector of site_id into query formatted string
+#     abbrev = utils._collapse_vector(
+#         vect = abbrev, 
+#         sep  = "%2C+"
+#         )
 
-    # collapse USGS ID list, tuple, vector of site_id into query formatted string
-    usgs_id = utils._collapse_vector(
-        vect = usgs_id, 
-        sep  = "%2C+"
-        )
+#     # collapse USGS ID list, tuple, vector of site_id into query formatted string
+#     usgs_id = utils._collapse_vector(
+#         vect = usgs_id, 
+#         sep  = "%2C+"
+#         )
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%Y"
+#         )
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving water year surface water time series")
+#     print("Retrieving water year surface water time series")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}'
-            f'&min-waterYear={start_date or ""}'
-            f'&max-waterYear={end_date or ""}'
-            f'&stationNum={station_number or ""}'
-            f'&usgsSiteId={usgs_id or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}'
+#             f'&min-waterYear={start_date or ""}'
+#             f'&max-waterYear={end_date or ""}'
+#             f'&stationNum={station_number or ""}'
+#             f'&usgsSiteId={usgs_id or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    return data_df
+#     return data_df
 
-def get_sw_ts(
-    abbrev              = None,
-    station_number      = None,
-    usgs_id             = None,
-    start_date          = None,
-    end_date            = None,
-    timescale           = None,
-    api_key             = None
-    ):
+# def get_sw_ts(
+#     abbrev              = None,
+#     station_number      = None,
+#     usgs_id             = None,
+#     start_date          = None,
+#     end_date            = None,
+#     timescale           = None,
+#     api_key             = None
+#     ):
 
-    """Return surface water time series data
+#     """Return surface water time series data
     
-    Make a request to the /surfacewater/surfacewaterts/ endpoints (surfacewatertsday, surfacewatertsmonth, surfacewatertswateryear) to retrieve surface water station time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates) and at a specified temporal resolution.     
+#     Make a request to the /surfacewater/surfacewaterts/ endpoints (surfacewatertsday, surfacewatertsmonth, surfacewatertswateryear) to retrieve surface water station time series data by station abbreviations, station number, or USGS Site IDs within a given date range (start and end dates) and at a specified temporal resolution.     
     
-    Args:
-        station_number (str, optional):  climate data station number. Defaults to None.
-        abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
-        station_number (int, str, optional):  surface water station number. Defaults to None.
-        usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): timestep of the time series data to return, either "day", "month", or "water_year". Defaults to None and will request daily time series.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         station_number (str, optional):  climate data station number. Defaults to None.
+#         abbrev (str, optional):  tuple or list of surface water station abbreviation. Defaults to None.
+#         station_number (int, str, optional):  surface water station number. Defaults to None.
+#         usgs_id (tuple, list, optional):  tuple or list of USGS ID. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         timescale (str, optional): timestep of the time series data to return, either "day", "month", or "water_year". Defaults to None and will request daily time series.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of surface water station time series data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of surface water station time series data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [abbrev, station_number, usgs_id]):
-    #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [abbrev, station_number, usgs_id]):
+#     #     raise TypeError("Invalid 'abbrev', 'station_number', or 'usgs_id' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date", "timescale"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date", "timescale"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # lists of valid timesteps
-    day_lst       = ['day', 'days', 'daily', 'd']
-    month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
-    year_lst      = ['wyear', 'water_year', 'wyears', 'water_years', 'wateryear', 'wateryears', 'wy', 'year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
-    timescale_lst = day_lst + month_lst + year_lst
+#     # lists of valid timesteps
+#     day_lst       = ['day', 'days', 'daily', 'd']
+#     month_lst     = ['month', 'months', 'monthly', 'mon', 'm']
+#     year_lst      = ['wyear', 'water_year', 'wyears', 'water_years', 'wateryear', 'wateryears', 'wy', 'year', 'years', 'yearly', 'annual', 'annually', 'yr', 'y']
+#     timescale_lst = day_lst + month_lst + year_lst
 
-    # if timescale is None, then defaults to "day"
-    if timescale is None: 
-        timescale = "day"
+#     # if timescale is None, then defaults to "day"
+#     if timescale is None: 
+#         timescale = "day"
         
-    # if parameter is NOT in list of valid parameters
-    if timescale not in timescale_lst:
-        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
+#     # if parameter is NOT in list of valid parameters
+#     if timescale not in timescale_lst:
+#         raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{day_lst}\n{month_lst}\n{year_lst}")
 
-    # request daily surface water time series data
-    if timescale in day_lst:    
-        sw_df = _get_sw_ts_day(
-            abbrev              = abbrev,
-            station_number      = station_number,
-            usgs_id             = usgs_id,
-            start_date          = start_date,
-            end_date            = end_date,
-            api_key             = api_key
-            )
+#     # request daily surface water time series data
+#     if timescale in day_lst:    
+#         sw_df = _get_sw_ts_day(
+#             abbrev              = abbrev,
+#             station_number      = station_number,
+#             usgs_id             = usgs_id,
+#             start_date          = start_date,
+#             end_date            = end_date,
+#             api_key             = api_key
+#             )
 
-        # return daily surface water time series data
-        return sw_df
+#         # return daily surface water time series data
+#         return sw_df
 
-    # request monthly surface water time series data
-    if timescale in month_lst:    
+#     # request monthly surface water time series data
+#     if timescale in month_lst:    
 
-        sw_df = _get_sw_ts_month(
-            abbrev              = abbrev,
-            station_number      = station_number,
-            usgs_id             = usgs_id,
-            start_date          = start_date,
-            end_date            = end_date,
-            api_key             = api_key
-            )
+#         sw_df = _get_sw_ts_month(
+#             abbrev              = abbrev,
+#             station_number      = station_number,
+#             usgs_id             = usgs_id,
+#             start_date          = start_date,
+#             end_date            = end_date,
+#             api_key             = api_key
+#             )
 
-        # return monthly surface water time series data
-        return sw_df
+#         # return monthly surface water time series data
+#         return sw_df
 
-    # request yearly surface water time series data
-    if timescale in year_lst:    
+#     # request yearly surface water time series data
+#     if timescale in year_lst:    
 
-        sw_df = _get_sw_ts_wyear(
-            abbrev              = abbrev,
-            station_number      = station_number,
-            usgs_id             = usgs_id,
-            start_date          = start_date,
-            end_date            = end_date,
-            api_key             = api_key
-            )
+#         sw_df = _get_sw_ts_wyear(
+#             abbrev              = abbrev,
+#             station_number      = station_number,
+#             usgs_id             = usgs_id,
+#             start_date          = start_date,
+#             end_date            = end_date,
+#             api_key             = api_key
+#             )
 
-        # return yearly surface water time series data
-        return sw_df
+#         # return yearly surface water time series data
+#         return sw_df
 
-def get_telemetry_stations(
-    aoi            = None,
-    radius         = None,
-    abbrev         = None,
-    county         = None,
-    division       = None,
-    gnis_id        = None,
-    usgs_id        = None,
-    water_district = None,
-    wdid           = None,
-    api_key        = None
-    ):
-    """Return Telemetry Station info
+# def get_telemetry_stations(
+#     aoi            = None,
+#     radius         = None,
+#     abbrev         = None,
+#     county         = None,
+#     division       = None,
+#     gnis_id        = None,
+#     usgs_id        = None,
+#     water_district = None,
+#     wdid           = None,
+#     api_key        = None
+#     ):
+#     """Return Telemetry Station info
 
-    Make a request to the /telemetrystations/telemetrystation endpoint to locate telemetry stations via a spatial search, or by station abbreviation, county, division, GNIS ID, USGS ID, water_district or WDID.  
+#     Make a request to the /telemetrystations/telemetrystation endpoint to locate telemetry stations via a spatial search, or by station abbreviation, county, division, GNIS ID, USGS ID, water_district or WDID.  
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        abbrev (str, tuple, list, optional): Abbreviation name (or list of abbreviations) of the telemetry station. Defaults to None.
-        county (str, optional): County to query for telemetry stations. Defaults to None.
-        division (int, str, optional):  Water division to query for telemetry stations. Defaults to None.
-        gnis_id (str, optional): GNIS ID of the telemetry station. Defaults to None.
-        usgs_id (str, optional): USGS ID of the telemetry station. Defaults to None.
-        water_district (int, str, optional): Water district to query for telemetry stations. Defaults to None.
-        wdid (str, optional): WDID of the telemetry station. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         abbrev (str, tuple, list, optional): Abbreviation name (or list of abbreviations) of the telemetry station. Defaults to None.
+#         county (str, optional): County to query for telemetry stations. Defaults to None.
+#         division (int, str, optional):  Water division to query for telemetry stations. Defaults to None.
+#         gnis_id (str, optional): GNIS ID of the telemetry station. Defaults to None.
+#         usgs_id (str, optional): USGS ID of the telemetry station. Defaults to None.
+#         water_district (int, str, optional): Water district to query for telemetry stations. Defaults to None.
+#         wdid (str, optional): WDID of the telemetry station. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
 
-    Returns:
-        pandas dataframe object: dataframe of telemetry station data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of telemetry station data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, abbrev, county, division, gnis_id, usgs_id, water_district, wdid]):
-    #     raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'gnis_id', 'usgs_id', 'water_district', or 'wdid' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [aoi, abbrev, county, division, gnis_id, usgs_id, water_district, wdid]):
+#     #     raise TypeError("Invalid 'aoi', 'abbrev', 'county', 'division', 'gnis_id', 'usgs_id', 'water_district', or 'wdid' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    # base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
+#     # base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrystation/?"
 
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # collapse site_id list, tuple, vector of site_id into query formatted string
-    abbrev = utils._collapse_vector(
-        vect = abbrev, 
-        sep  = "%2C+"
-        )
+#     # collapse site_id list, tuple, vector of site_id into query formatted string
+#     abbrev = utils._collapse_vector(
+#         vect = abbrev, 
+#         sep  = "%2C+"
+#         )
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving telemetry station data")
+#     print("Retrieving telemetry station data")
     
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}'
-            f'&county={county or ""}'
-            f'&division={division or ""}'
-            f'&gnisId={gnis_id or ""}'
-            f'&includeThirdParty=true'
-            f'&usgsStationId={usgs_id or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&wdid={wdid or ""}'
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}'
+#             f'&county={county or ""}'
+#             f'&division={division or ""}'
+#             f'&gnisId={gnis_id or ""}'
+#             f'&includeThirdParty=true'
+#             f'&usgsStationId={usgs_id or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if (len(cdss_df.index) < page_size):
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if (len(cdss_df.index) < page_size):
+#             more_pages = False
+#         else:
+#             page_index += 1
     
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
 
-    return data_df
+#     return data_df
 
-def get_telemetry_ts(
-    abbrev              = None,
-    parameter           = "DISCHRG",
-    start_date          = None,
-    end_date            = None,
-    timescale           = None,
-    include_third_party = True,
-    api_key             = None
-    ):
-    """Return Telemetry station time series data
+# def get_telemetry_ts(
+#     abbrev              = None,
+#     parameter           = "DISCHRG",
+#     start_date          = None,
+#     end_date            = None,
+#     timescale           = None,
+#     include_third_party = True,
+#     api_key             = None
+#     ):
+#     """Return Telemetry station time series data
 
-    Make a request to the /telemetrystations/telemetrytimeseries endpoint to retrieve raw, hourly, or daily telemetry station time series data by station abbreviations, within a given date range (start and end dates).
+#     Make a request to the /telemetrystations/telemetrytimeseries endpoint to retrieve raw, hourly, or daily telemetry station time series data by station abbreviations, within a given date range (start and end dates).
 
-    Args:
-        abbrev (str, optional): Station abbreviation. Defaults to None.
-        parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations. Defaults to "DISCHRG".
-        start_date (str, optional): Date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): Date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to None and will request daily time series.
-        include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         abbrev (str, optional): Station abbreviation. Defaults to None.
+#         parameter (str, optional): Indicating which telemetry station parameter should be retrieved. Default is "DISCHRG" (discharge), all parameters are not available at all telemetry stations. Defaults to "DISCHRG".
+#         start_date (str, optional): Date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): Date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         timescale (str, optional): Data timescale to return, either "raw", "hour", or "day". Defaults to None and will request daily time series.
+#         include_third_party (bool, optional): Boolean, indicating whether to retrieve data from other third party sources if necessary. Defaults to True.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of telemetry station time series data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of telemetry station time series data
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "parameter", "start_date", "end_date", "timescale"],
-        f        = any
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "parameter", "start_date", "end_date", "timescale"],
+#         f        = any
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # lists of valid timesteps
-    timescale_lst = ["day", "hour", "raw"]
+#     # lists of valid timesteps
+#     timescale_lst = ["day", "hour", "raw"]
 
-    # if timescale is None, then defaults to "day"
-    if timescale is None: 
-        timescale = "day"
+#     # if timescale is None, then defaults to "day"
+#     if timescale is None: 
+#         timescale = "day"
         
-    # if parameter is NOT in list of valid parameters
-    if timescale not in timescale_lst:
-        raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{timescale_lst}")
+#     # if parameter is NOT in list of valid parameters
+#     if timescale not in timescale_lst:
+#         raise ValueError(f"Invalid `timescale` argument: '{timescale}'\nPlease enter one of the following valid timescales: \n{timescale_lst}")
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/telemetrystations/telemetrytimeseries" + timescale + "/?"
 
-    # parse start_date into query string format
-    start_date = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-    )
+#     # parse start_date into query string format
+#     start_date = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#     )
 
-    # parse end_date into query string format
-    end_date = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end_date = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
     
-    # Create True or False include 3rd party string
-    third_party_str = str(include_third_party).lower()
+#     # Create True or False include 3rd party string
+#     third_party_str = str(include_third_party).lower()
 
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print(f"Retrieving telemetry station time series data ({timescale} - {parameter})")
+#     print(f"Retrieving telemetry station time series data ({timescale} - {parameter})")
 
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
         
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&abbrev={abbrev or ""}'
-            f'&endDate={end_date or ""}'
-            f'&startDate={start_date or ""}'
-            f'&includeThirdParty={third_party_str or ""}'
-            f'&parameter={parameter or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&abbrev={abbrev or ""}'
+#             f'&endDate={end_date or ""}'
+#             f'&startDate={start_date or ""}'
+#             f'&includeThirdParty={third_party_str or ""}'
+#             f'&parameter={parameter or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
         
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df  = cdss_req.json() 
-        cdss_df  = pd.DataFrame(cdss_df)
-        cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
+#         # extract dataframe from list column
+#         cdss_df  = cdss_req.json() 
+#         cdss_df  = pd.DataFrame(cdss_df)
+#         cdss_df  = cdss_df["ResultList"].apply(pd.Series) 
         
-        # convert measDateTime and measDate columns to 'date' and pd datetime type
-        if timescale == "raw":
-            # convert measDate column to datetime column
-            cdss_df['measDateTime'] = pd.to_datetime(cdss_df['measDateTime'])
+#         # convert measDateTime and measDate columns to 'date' and pd datetime type
+#         if timescale == "raw":
+#             # convert measDate column to datetime column
+#             cdss_df['measDateTime'] = pd.to_datetime(cdss_df['measDateTime'])
 
-        else: 
-            # convert measDate column to datetime column
-            cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
+#         else: 
+#             # convert measDate column to datetime column
+#             cdss_df['measDate'] = pd.to_datetime(cdss_df['measDate'])
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
         
-        # Check if more pages to get to continue/stop while loop
-        if(len(cdss_df.index) < page_size): 
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if(len(cdss_df.index) < page_size): 
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_water_rights_netamount(
-    aoi                 = None,
-    radius              = None, 
-    county              = None,
-    division            = None,
-    water_district      = None,
-    wdid                = None,
-    api_key             = None
-    ):
-    """Return water rights net amounts data
+# def get_water_rights_netamount(
+#     aoi                 = None,
+#     radius              = None, 
+#     county              = None,
+#     division            = None,
+#     water_district      = None,
+#     wdid                = None,
+#     api_key             = None
+#     ):
+#     """Return water rights net amounts data
 
-    Make a request to the /waterrights/netamount endpoint to retrieve water rights net amounts data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
-    Returns current status of a water right based on all of its court decreed actions.
+#     Make a request to the /waterrights/netamount endpoint to retrieve water rights net amounts data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
+#     Returns current status of a water right based on all of its court decreed actions.
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        county (str, optional): County to query for water rights. Defaults to None.
-        division (int, str, optional):  Water division to query for water rights. Defaults to None.
-        water_district (str, optional): Water district to query for water rights. Defaults to None.
-        wdid (str, optional): WDID code of water right. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         county (str, optional): County to query for water rights. Defaults to None.
+#         division (int, str, optional):  Water division to query for water rights. Defaults to None.
+#         water_district (str, optional): Water district to query for water rights. Defaults to None.
+#         wdid (str, optional): WDID code of water right. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of water rights net amounts data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of water rights net amounts data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, county, division, water_district, wdid]):
-    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [aoi, county, division, water_district, wdid]):
+#     #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/netamount/?"
 
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving water rights net amounts data")
+#     print("Retrieving water rights net amounts data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}'
-            f'&division={division or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&wdid={wdid or ""}'
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}'
+#             f'&division={division or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
 
-    return data_df
+#     return data_df
 
-def get_water_rights_trans(
-    aoi                 = None,
-    radius              = None, 
-    county              = None,
-    division            = None,
-    water_district      = None,
-    wdid                = None,
-    api_key             = None
-    ):
-    """Return water rights transactions data
+# def get_water_rights_trans(
+#     aoi                 = None,
+#     radius              = None, 
+#     county              = None,
+#     division            = None,
+#     water_district      = None,
+#     wdid                = None,
+#     api_key             = None
+#     ):
+#     """Return water rights transactions data
 
-    Make a request to the /waterrights/transaction endpoint to retrieve water rights transactions data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
-    Returns List of court decreed actions that affect amount and use(s) that can be used by each water right.
+#     Make a request to the /waterrights/transaction endpoint to retrieve water rights transactions data via a spatial search or by county, division, water district, or WDID, within a given date range (start and end dates).
+#     Returns List of court decreed actions that affect amount and use(s) that can be used by each water right.
 
-    Args:
-        aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
-        radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
-        county (str, optional): County to query for water rights. Defaults to None.
-        division (int, str, optional):  Water division to query for water rights transactions. Defaults to None.
-        water_district (str, optional): Water district to query for water rights transactions. Defaults to None.
-        wdid (str, optional): WDID code of water right transaction. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         aoi (list, tuple, dict, DataFrame, shapely geometry, GeoDataFrame, GeoSeries): a list/tuple of an XY coordinate pair, a dictionary with XY keys, a Pandas Dataframe, a shapely Point/Polygon/LineString, or a Geopandas GeoDataFrame/GeoSeries containing a Point/Polygon/LineString/LinearRing. Defaults to None.
+#         radius (int, str, optional): radius value between 1-150 miles. Defaults to None, and if an aoi is given, the radius will default to a 20 mile radius.
+#         county (str, optional): County to query for water rights. Defaults to None.
+#         division (int, str, optional):  Water division to query for water rights transactions. Defaults to None.
+#         water_district (str, optional): Water district to query for water rights transactions. Defaults to None.
+#         wdid (str, optional): WDID code of water right transaction. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of water rights transactions data
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of water rights transactions data
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [aoi, county, division, water_district, wdid]):
-    #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [aoi, county, division, water_district, wdid]):
+#     #     raise TypeError("Invalid 'aoi', 'county', 'division', 'water_district', or 'wdid' parameters")
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/transaction/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/waterrights/transaction/?"
 
-    # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils._check_aoi(
-        aoi    = aoi,
-        radius = radius
-        )
+#     # check and extract spatial data from 'aoi' and 'radius' args for location search query
+#     aoi_lst = utils._check_aoi(
+#         aoi    = aoi,
+#         radius = radius
+#         )
 
-    # lat/long coords and radius
-    lng    = aoi_lst[0]
-    lat    = aoi_lst[1]
-    radius = aoi_lst[2]
+#     # lat/long coords and radius
+#     lng    = aoi_lst[0]
+#     lat    = aoi_lst[1]
+#     radius = aoi_lst[2]
 
-    # maximum records per page
-    page_size = 50000
+#     # maximum records per page
+#     page_size = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving water rights transactions data")
+#     print("Retrieving water rights transactions data")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&county={county or ""}'
-            f'&division={division or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&wdid={wdid or ""}'
-            f'&latitude={lat or ""}' 
-            f'&longitude={lng or ""}' 
-            f'&radius={radius or ""}' 
-            f'&units=miles' 
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&county={county or ""}'
+#             f'&division={division or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&latitude={lat or ""}' 
+#             f'&longitude={lng or ""}' 
+#             f'&radius={radius or ""}' 
+#             f'&units=miles' 
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    # mask data if necessary
-    data_df = utils._aoi_mask(
-        aoi = aoi,
-        pts = data_df
-        )
+#     # mask data if necessary
+#     data_df = utils._aoi_mask(
+#         aoi = aoi,
+#         pts = data_df
+#         )
     
-    return data_df
-
-def get_call_analysis_wdid(
-    wdid                = None,
-    admin_no            = None,
-    start_date          = None,
-    end_date            = None,
-    batch               = False,
-    api_key             = None
-    ):
-    """Return call analysis by WDID from analysis services API
-    
-    Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
-    
-    Args:
-        wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
-        admin_no (str, int optional): Water Right Administration Number. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-    Returns:
-        pandas dataframe object: dataframe of call services by WDID
-    """
-    
-    # list of function inputs
-    input_args = locals()
-
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = any
-        )
-    
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
-    
-    # convert int admin_no to str
-    if(isinstance(admin_no, (int))):
-        admin_no = str(admin_no)
-    
-    # if function should be run in batch mode
-    if(batch == True):
-
-        # final output dataframe to append query results to
-        out_df = pd.DataFrame()
-        
-        # make a list of date ranges to issue GET requests in smaller batches
-        date_lst = utils._batch_dates(
-            start_date = start_date,
-            end_date   = end_date
-            )
-        
-        # print message 
-        print("Retrieving call analysis data by WDID")
-
-        # go through range of dates in date_df and make batch GET requests
-        for idx, val in enumerate(date_lst):
-
-            print("Batch: ", idx+1, "/", len(date_lst))
-            
-            cdss_df = _inner_call_analysis_wdid(
-                wdid       = wdid,
-                admin_no   = admin_no,
-                start_date = val[0],
-                end_date   = val[1],
-                api_key    = api_key
-                )
-            
-            # bind data from this page
-            out_df = pd.concat([out_df, cdss_df])
-        
-        return out_df
-    
-    else:
-
-        # print message 
-        print("Retrieving call analysis data by WDID")
-
-        out_df = _inner_call_analysis_wdid(
-            wdid       = wdid,
-            admin_no   = admin_no,
-            start_date = start_date,
-            end_date   = end_date,
-            api_key    = api_key
-            )
-        
-        return out_df
+#     return data_df
 
 # def get_call_analysis_wdid(
 #     wdid                = None,
 #     admin_no            = None,
 #     start_date          = None,
 #     end_date            = None,
+#     batch               = False,
 #     api_key             = None
 #     ):
 #     """Return call analysis by WDID from analysis services API
@@ -4037,8 +3949,8 @@ def get_call_analysis_wdid(
 #         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
 #         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
 #         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
 #         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-
 #     Returns:
 #         pandas dataframe object: dataframe of call services by WDID
 #     """
@@ -4060,623 +3972,711 @@ def get_call_analysis_wdid(
 #     # convert int admin_no to str
 #     if(isinstance(admin_no, (int))):
 #         admin_no = str(admin_no)
+    
+#     # if function should be run in batch mode
+#     if(batch == True):
+
+#         # final output dataframe to append query results to
+#         out_df = pd.DataFrame()
+        
+#         # make a list of date ranges to issue GET requests in smaller batches
+#         date_lst = utils._batch_dates(
+#             start_date = start_date,
+#             end_date   = end_date
+#             )
+        
+#         # print message 
+#         print("Retrieving call analysis data by WDID")
+
+#         # go through range of dates in date_df and make batch GET requests
+#         for idx, val in enumerate(date_lst):
+
+#             print("Batch: ", idx+1, "/", len(date_lst))
+            
+#             cdss_df = _inner_call_analysis_wdid(
+#                 wdid       = wdid,
+#                 admin_no   = admin_no,
+#                 start_date = val[0],
+#                 end_date   = val[1],
+#                 api_key    = api_key
+#                 )
+            
+#             # bind data from this page
+#             out_df = pd.concat([out_df, cdss_df])
+        
+#         return out_df
+    
+#     else:
+
+#         # print message 
+#         print("Retrieving call analysis data by WDID")
+
+#         out_df = _inner_call_analysis_wdid(
+#             wdid       = wdid,
+#             admin_no   = admin_no,
+#             start_date = start_date,
+#             end_date   = end_date,
+#             api_key    = api_key
+#             )
+        
+#         return out_df
+
+# # def get_call_analysis_wdid(
+# #     wdid                = None,
+# #     admin_no            = None,
+# #     start_date          = None,
+# #     end_date            = None,
+# #     api_key             = None
+# #     ):
+# #     """Return call analysis by WDID from analysis services API
+    
+# #     Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
+    
+# #     Args:
+# #         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
+# #         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
+# #         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+# #         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+# #         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+# #     Returns:
+# #         pandas dataframe object: dataframe of call services by WDID
+# #     """
+    
+# #     # list of function inputs
+# #     input_args = locals()
+
+# #     # check function arguments for missing/invalid inputs
+# #     arg_lst = utils._check_args(
+# #         arg_dict = input_args,
+# #         ignore   = ["api_key", "start_date", "end_date"],
+# #         f        = any
+# #         )
+    
+# #     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+# #     if arg_lst is not None:
+# #         raise Exception(arg_lst)
+    
+# #     # convert int admin_no to str
+# #     if(isinstance(admin_no, (int))):
+# #         admin_no = str(admin_no)
+
+# #     #  base API URL
+# #     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
+
+# #     # make a list of date ranges to issue GET requests in smaller batches
+# #     date_lst = utils._batch_dates(
+# #         start_date = start_date,
+# #         end_date   = end_date
+# #         )
+
+# #     # final output dataframe to append query results to
+# #     out_df = pd.DataFrame()
+
+# #     # print message 
+# #     print("Retrieving call analysis data by WDID")
+
+# #     # go through range of dates in date_df and make batch GET requests
+# #     for idx, val in enumerate(date_lst):
+
+# #         print("index: ", idx, " | value: ", val)
+# #         # print("START: ", val[0], " | END: ", val[1])
+
+# #         # parse start_date into query string format
+# #         start = utils._parse_date(
+# #             date   = val[0],
+# #             start  = True,
+# #             format = "%m-%d-%Y"
+# #             )
+
+# #         # parse end_date into query string format
+# #         end = utils._parse_date(
+# #             date   = val[1],
+# #             start  = False,
+# #             format = "%m-%d-%Y"
+# #             )
+
+# #         # maximum records per page
+# #         page_size = 50000
+
+# #         # initialize empty dataframe to store data from multiple pages
+# #         data_df = pd.DataFrame()
+
+# #         # initialize first page index
+# #         page_index = 1
+
+# #         # Loop through pages until there are no more pages to get
+# #         more_pages = True
+
+# #         # Loop through pages until last page of data is found, binding each response dataframe together
+# #         while more_pages == True:
+
+# #             # create query URL string
+# #             url = (
+# #                 f'{base}format=json&dateFormat=spaceSepToSeconds'
+# #                 f'&adminNo={admin_no or ""}'
+# #                 f'&endDate={end or ""}'
+# #                 f'&startDate={start or ""}'
+# #                 f'&wdid={wdid or ""}'
+# #                 f'&pageSize={page_size}&pageIndex={page_index}'
+# #                 )
+
+# #             # If an API key is provided, add it to query URL
+# #             if api_key is not None:
+# #                 # Construct query URL w/ API key
+# #                 url = url + "&apiKey=" + str(api_key)
+
+# #             # make API call w/ error handling
+# #             cdss_req = utils._parse_gets(
+# #                 url      = url, 
+# #                 arg_dict = input_args,
+# #                 ignore   = None
+# #                 )
+            
+# #             # # make API call w/ error handling
+# #             # cdss_req = _get_error_handler(
+# #             #     url      = url
+# #             #     )
+
+# #             # extract dataframe from list column
+# #             cdss_df = cdss_req.json()
+# #             cdss_df = pd.DataFrame(cdss_df)
+# #             cdss_df = cdss_df["ResultList"].apply(pd.Series)
+
+# #             # bind data from this page
+# #             data_df = pd.concat([data_df, cdss_df])
+
+# #             # Check if more pages to get to continue/stop while loop
+# #             if len(cdss_df.index) < page_size:
+# #                 more_pages = False
+# #             else:
+# #                 page_index += 1
+
+# #         # bind data from this page
+# #         out_df = pd.concat([out_df, data_df])
+
+# #     return out_df
+
+# def _inner_call_analysis_wdid(
+#     wdid                = None,
+#     admin_no            = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return call analysis by WDID from analysis services API
+    
+#     Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
+    
+#     Args:
+#         wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
+#         admin_no (str, int optional): Water Right Administration Number. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+#     Returns:
+#         pandas dataframe object: dataframe of call services by WDID
+#     """
+
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [wdid, admin_no]):
+#     #     raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+    
+#     # list of function inputs
+#     input_args = locals()
+
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
+    
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
+    
+#     # convert int admin_no to str
+#     if(isinstance(admin_no, (int))):
+#         admin_no = str(admin_no)
 
 #     #  base API URL
 #     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
-
-#     # make a list of date ranges to issue GET requests in smaller batches
-#     date_lst = utils._batch_dates(
-#         start_date = start_date,
-#         end_date   = end_date
+    
+#     # parse start_date into query string format
+#     start = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
 #         )
 
-#     # final output dataframe to append query results to
-#     out_df = pd.DataFrame()
+#     # parse end_date into query string format
+#     end = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-#     # print message 
-#     print("Retrieving call analysis data by WDID")
+#     # maximum records per page
+#     page_size = 50000
 
-#     # go through range of dates in date_df and make batch GET requests
-#     for idx, val in enumerate(date_lst):
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-#         print("index: ", idx, " | value: ", val)
-#         # print("START: ", val[0], " | END: ", val[1])
+#     # initialize first page index
+#     page_index = 1
 
-#         # parse start_date into query string format
-#         start = utils._parse_date(
-#             date   = val[0],
-#             start  = True,
-#             format = "%m-%d-%Y"
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
+
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
+
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&adminNo={admin_no or ""}'
+#             f'&endDate={end or ""}'
+#             f'&startDate={start or ""}'
+#             f'&wdid={wdid or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
 #             )
 
-#         # parse end_date into query string format
-#         end = utils._parse_date(
-#             date   = val[1],
-#             start  = False,
-#             format = "%m-%d-%Y"
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
+
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
 #             )
+        
+#         # # make API call w/ error handling
+#         # cdss_req = _get_error_handler(
+#         #     url      = url
+#         #     )
 
-#         # maximum records per page
-#         page_size = 50000
-
-#         # initialize empty dataframe to store data from multiple pages
-#         data_df = pd.DataFrame()
-
-#         # initialize first page index
-#         page_index = 1
-
-#         # Loop through pages until there are no more pages to get
-#         more_pages = True
-
-#         # Loop through pages until last page of data is found, binding each response dataframe together
-#         while more_pages == True:
-
-#             # create query URL string
-#             url = (
-#                 f'{base}format=json&dateFormat=spaceSepToSeconds'
-#                 f'&adminNo={admin_no or ""}'
-#                 f'&endDate={end or ""}'
-#                 f'&startDate={start or ""}'
-#                 f'&wdid={wdid or ""}'
-#                 f'&pageSize={page_size}&pageIndex={page_index}'
-#                 )
-
-#             # If an API key is provided, add it to query URL
-#             if api_key is not None:
-#                 # Construct query URL w/ API key
-#                 url = url + "&apiKey=" + str(api_key)
-
-#             # make API call w/ error handling
-#             cdss_req = utils._parse_gets(
-#                 url      = url, 
-#                 arg_dict = input_args,
-#                 ignore   = None
-#                 )
-            
-#             # # make API call w/ error handling
-#             # cdss_req = _get_error_handler(
-#             #     url      = url
-#             #     )
-
-#             # extract dataframe from list column
-#             cdss_df = cdss_req.json()
-#             cdss_df = pd.DataFrame(cdss_df)
-#             cdss_df = cdss_df["ResultList"].apply(pd.Series)
-
-#             # bind data from this page
-#             data_df = pd.concat([data_df, cdss_df])
-
-#             # Check if more pages to get to continue/stop while loop
-#             if len(cdss_df.index) < page_size:
-#                 more_pages = False
-#             else:
-#                 page_index += 1
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
 #         # bind data from this page
-#         out_df = pd.concat([out_df, data_df])
+#         data_df = pd.concat([data_df, cdss_df])
 
-#     return out_df
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-def _inner_call_analysis_wdid(
-    wdid                = None,
-    admin_no            = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return call analysis by WDID from analysis services API
+#     return data_df
+
+# def _inner_call_analysis_gnisid(
+#     gnis_id             = None,
+#     admin_no            = None,
+#     stream_mile         = None,
+#     start_date          = None,
+#     end_date            = None,
+#     api_key             = None
+#     ):
+#     """Return call analysis by GNIS ID from analysis services API
     
-    Makes a request to the analysisservices/callanalysisbywdid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified WDID and priority was out of priority and the downstream call in priority.
+#     Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
+#     This can be used when there is not an existing WDID to be analyzed.
+
+#     Args:
+#         gnis_id(str): GNIS ID to query. Defaults to None.
+#         admin_no (str, int): Water Right Administration Number. Defaults to None.
+#         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+
+#     Returns:
+#         pandas dataframe object: dataframe of call services by GNIS ID
+#     """
     
-    Args:
-        wdid (str, optional): DWR WDID unique structure identifier code. Defaults to None.
-        admin_no (str, int optional): Water Right Administration Number. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     # list of function inputs
+#     input_args = locals()
 
-    Returns:
-        pandas dataframe object: dataframe of call services by WDID
-    """
-
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [wdid, admin_no]):
-    #     raise TypeError("Invalid 'wdid' and 'admin_no' parameters.\nPlease enter a 'wdid' and 'admin_no' to retrieve call analysis data")
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
     
-    # list of function inputs
-    input_args = locals()
-
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = any
-        )
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # convert int admin_no to str
+#     if(isinstance(admin_no, (int))):
+#         admin_no = str(admin_no)
+
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbygnisid/?"
     
-    # convert int admin_no to str
-    if(isinstance(admin_no, (int))):
-        admin_no = str(admin_no)
+#     # parse start_date into query string format
+#     start = utils._parse_date(
+#         date   = start_date,
+#         start  = True,
+#         format = "%m-%d-%Y"
+#         )
 
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbywdid/?"
-    
-    # parse start_date into query string format
-    start = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-        )
+#     # parse end_date into query string format
+#     end = utils._parse_date(
+#         date   = end_date,
+#         start  = False,
+#         format = "%m-%d-%Y"
+#         )
 
-    # parse end_date into query string format
-    end = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
+#     # maximum records per page
+#     page_size = 50000
 
-    # maximum records per page
-    page_size = 50000
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df = pd.DataFrame()
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
+#     # initialize first page index
+#     page_index = 1
 
-    # initialize first page index
-    page_index = 1
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&adminNo={admin_no or ""}'
+#             f'&endDate={end or ""}'
+#             f'&gnisId={gnis_id or ""}'
+#             f'&startDate={start or ""}'
+#             f'&streamMile={stream_mile or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&adminNo={admin_no or ""}'
-            f'&endDate={end or ""}'
-            f'&startDate={start or ""}'
-            f'&wdid={wdid or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
-
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
         
-        # # make API call w/ error handling
-        # cdss_req = _get_error_handler(
-        #     url      = url
-        #     )
+#         # # make API call w/ error handling
+#         # cdss_req = _get_error_handler(
+#         #     url      = url
+#         #     )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def _inner_call_analysis_gnisid(
-    gnis_id             = None,
-    admin_no            = None,
-    stream_mile         = None,
-    start_date          = None,
-    end_date            = None,
-    api_key             = None
-    ):
-    """Return call analysis by GNIS ID from analysis services API
+# def get_call_analysis_gnisid(
+#     gnis_id             = None,
+#     admin_no            = None,
+#     stream_mile         = None,
+#     start_date          = None,
+#     end_date            = None,
+#     batch               = False,
+#     api_key             = None
+#     ):
+#     """Return call analysis by GNIS ID from analysis services API
     
-    Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
-    This can be used when there is not an existing WDID to be analyzed.
+#     Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
+#     This can be used when there is not an existing WDID to be analyzed.
 
-    Args:
-        gnis_id(str): GNIS ID to query. Defaults to None.
-        admin_no (str, int): Water Right Administration Number. Defaults to None.
-        stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-
-    Returns:
-        pandas dataframe object: dataframe of call services by GNIS ID
-    """
+#     Args:
+#         gnis_id(str): GNIS ID to query. Defaults to None.
+#         admin_no (str, int): Water Right Administration Number. Defaults to None.
+#         stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
+#         start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
+#         end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
+#         batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Returns:
+#         pandas dataframe object: dataframe of call services by GNIS ID
+#     """
     
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = any
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key", "start_date", "end_date"],
+#         f        = any
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    # convert int admin_no to str
-    if(isinstance(admin_no, (int))):
-        admin_no = str(admin_no)
-
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/callanalysisbygnisid/?"
+#     # convert int admin_no to str
+#     if(isinstance(admin_no, (int))):
+#         admin_no = str(admin_no)
     
-    # parse start_date into query string format
-    start = utils._parse_date(
-        date   = start_date,
-        start  = True,
-        format = "%m-%d-%Y"
-        )
+#     # if function should be run in batch mode
+#     if(batch == True):
 
-    # parse end_date into query string format
-    end = utils._parse_date(
-        date   = end_date,
-        start  = False,
-        format = "%m-%d-%Y"
-        )
-
-    # maximum records per page
-    page_size = 50000
-
-    # initialize empty dataframe to store data from multiple pages
-    data_df = pd.DataFrame()
-
-    # initialize first page index
-    page_index = 1
-
-    # Loop through pages until there are no more pages to get
-    more_pages = True
-
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
-
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&adminNo={admin_no or ""}'
-            f'&endDate={end or ""}'
-            f'&gnisId={gnis_id or ""}'
-            f'&startDate={start or ""}'
-            f'&streamMile={stream_mile or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
-
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
-
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # final output dataframe to append query results to
+#         out_df = pd.DataFrame()
         
-        # # make API call w/ error handling
-        # cdss_req = _get_error_handler(
-        #     url      = url
-        #     )
-
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
-
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
-
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
-
-    return data_df
-
-def get_call_analysis_gnisid(
-    gnis_id             = None,
-    admin_no            = None,
-    stream_mile         = None,
-    start_date          = None,
-    end_date            = None,
-    batch               = False,
-    api_key             = None
-    ):
-    """Return call analysis by GNIS ID from analysis services API
-    
-    Makes a request to the analysisservices/callanalysisbygnisid/ endpoint that performs a call analysis that returns a time series showing the percentage of each day that the specified stream/stream mile and priority was out of priority and the downstream call in priority. 
-    This can be used when there is not an existing WDID to be analyzed.
-
-    Args:
-        gnis_id(str): GNIS ID to query. Defaults to None.
-        admin_no (str, int): Water Right Administration Number. Defaults to None.
-        stream_mile (str, int, float): stream mile for call analysis. Defaults to None.
-        start_date (str, optional): string date to request data start point YYYY-MM-DD. Defaults to None, which will return data starting at "1900-01-01".
-        end_date (str, optional): string date to request data end point YYYY-MM-DD. Defaults to None, which will return data ending at the current date.
-        batch (bool, optional): Boolean, whether to break date range calls into batches of 1 year. This can speed up data retrieval for date ranges greater than a year. A date range of 5 years would be batched into 5 separate API calls for each year. Default is False, will run a single query for the entire date range.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
-    Returns:
-        pandas dataframe object: dataframe of call services by GNIS ID
-    """
-    
-    # list of function inputs
-    input_args = locals()
-
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key", "start_date", "end_date"],
-        f        = any
-        )
-    
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
-    
-    # convert int admin_no to str
-    if(isinstance(admin_no, (int))):
-        admin_no = str(admin_no)
-    
-    # if function should be run in batch mode
-    if(batch == True):
-
-        # final output dataframe to append query results to
-        out_df = pd.DataFrame()
+#         # make a list of date ranges to issue GET requests in smaller batches
+#         date_lst = utils._batch_dates(
+#             start_date = start_date,
+#             end_date   = end_date
+#             )
         
-        # make a list of date ranges to issue GET requests in smaller batches
-        date_lst = utils._batch_dates(
-            start_date = start_date,
-            end_date   = end_date
-            )
-        
-        # print message 
-        print("Retrieving call analysis data by GNIS ID")
+#         # print message 
+#         print("Retrieving call analysis data by GNIS ID")
 
-        # go through range of dates in date_df and make batch GET requests
-        for idx, val in enumerate(date_lst):
+#         # go through range of dates in date_df and make batch GET requests
+#         for idx, val in enumerate(date_lst):
 
-            print("Batch: ", idx+1, "/", len(date_lst))
+#             print("Batch: ", idx+1, "/", len(date_lst))
 
-            cdss_df = _inner_call_analysis_gnisid(
-                gnis_id      = gnis_id,
-                admin_no     = admin_no,
-                stream_mile  = stream_mile,
-                start_date   = val[0],
-                end_date     = val[1],
-                api_key      = api_key
-                )
+#             cdss_df = _inner_call_analysis_gnisid(
+#                 gnis_id      = gnis_id,
+#                 admin_no     = admin_no,
+#                 stream_mile  = stream_mile,
+#                 start_date   = val[0],
+#                 end_date     = val[1],
+#                 api_key      = api_key
+#                 )
             
-            # bind data from this page
-            out_df = pd.concat([out_df, cdss_df])
+#             # bind data from this page
+#             out_df = pd.concat([out_df, cdss_df])
         
-        return out_df
+#         return out_df
     
-    else:
+#     else:
 
-        # print message 
-        print("Retrieving call analysis data by GNIS ID")
+#         # print message 
+#         print("Retrieving call analysis data by GNIS ID")
 
-        out_df = _inner_call_analysis_gnisid(
-            gnis_id      = gnis_id,
-            admin_no     = admin_no,
-            stream_mile  = stream_mile,
-            start_date   = start_date,
-            end_date     = end_date,
-            api_key      = api_key
-            )
+#         out_df = _inner_call_analysis_gnisid(
+#             gnis_id      = gnis_id,
+#             admin_no     = admin_no,
+#             stream_mile  = stream_mile,
+#             start_date   = start_date,
+#             end_date     = end_date,
+#             api_key      = api_key
+#             )
         
-        return out_df
+#         return out_df
     
 
-def get_source_route_framework(
-    division            = None,
-    gnis_name           = None,
-    water_district      = None,
-    api_key             = None
-    ):
-    """Return call analysis by WDID from analysis services API
+# def get_source_route_framework(
+#     division            = None,
+#     gnis_name           = None,
+#     water_district      = None,
+#     api_key             = None
+#     ):
+#     """Return call analysis by WDID from analysis services API
 
-    Makes a request to the analysisservices/watersourcerouteframework/ endpoint to retrieve the DWR source route framework reference table for the criteria specified.
+#     Makes a request to the analysisservices/watersourcerouteframework/ endpoint to retrieve the DWR source route framework reference table for the criteria specified.
 
-    Args:
-        division (int, str, optional):  Water division to query for water rights. Defaults to None.
-        gnis_name (str, optional): GNIS Name to query and retrieve DWR source route frameworks. Defaults to None.
-        water_district (str, optional): Water district to query for water rights. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Args:
+#         division (int, str, optional):  Water division to query for water rights. Defaults to None.
+#         gnis_name (str, optional): GNIS Name to query and retrieve DWR source route frameworks. Defaults to None.
+#         water_district (str, optional): Water district to query for water rights. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of source route framework
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of source route framework
+#     """
 
-    # # If all inputs are None, then return error message
-    # if all(i is None for i in [division, gnis_name, water_district]):
-    #     raise TypeError("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
+#     # # If all inputs are None, then return error message
+#     # if all(i is None for i in [division, gnis_name, water_district]):
+#     #     raise TypeError("Invalid 'division', 'gnis_name' or 'water_district' parameters.\nPlease enter a 'division', 'gnis_name' or 'water_district' to retrieve  DWR source route framework data")
     
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = all
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = all
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteframework/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteframework/?"
     
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving DWR source route frameworks")
+#     print("Retrieving DWR source route frameworks")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&division={division or ""}'
-            f'&gnisName={gnis_name or ""}'
-            f'&waterDistrict={water_district or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&division={division or ""}'
+#             f'&gnisName={gnis_name or ""}'
+#             f'&waterDistrict={water_district or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
-def get_source_route_analysis(
-    lt_gnis_id          = None,
-    lt_stream_mile      = None,
-    ut_gnis_id          = None,
-    ut_stream_mile      = None,
-    api_key             = None
-    ):
-    """Returns all WDID(s), and their stream mile, located between two different stream locations on the DWR Water Source Framework
+# def get_source_route_analysis(
+#     lt_gnis_id          = None,
+#     lt_stream_mile      = None,
+#     ut_gnis_id          = None,
+#     ut_stream_mile      = None,
+#     api_key             = None
+#     ):
+#     """Returns all WDID(s), and their stream mile, located between two different stream locations on the DWR Water Source Framework
 
-    Makes a request to the analysisservices/watersourcerouteanalysis/ endpoint to retrieve the DWR source route framework analysis data.
-    Args:
-        lt_gnis_id (str, int):  lower terminus GNIS ID. Defaults to None.
-        lt_stream_mile (str, int): lower terminus stream mile. Defaults to None.
-        ut_gnis_id (str, int):  upper terminus GNIS ID. Defaults to None.
-        ut_stream_mile (str, int): upper terminus stream mile. Defaults to None.
-        api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
+#     Makes a request to the analysisservices/watersourcerouteanalysis/ endpoint to retrieve the DWR source route framework analysis data.
+#     Args:
+#         lt_gnis_id (str, int):  lower terminus GNIS ID. Defaults to None.
+#         lt_stream_mile (str, int): lower terminus stream mile. Defaults to None.
+#         ut_gnis_id (str, int):  upper terminus GNIS ID. Defaults to None.
+#         ut_stream_mile (str, int): upper terminus stream mile. Defaults to None.
+#         api_key (str, optional): API authorization token, optional. If more than maximum number of requests per day is desired, an API key can be obtained from CDSS. Defaults to None.
 
-    Returns:
-        pandas dataframe object: dataframe of water source route framework analysis
-    """
+#     Returns:
+#         pandas dataframe object: dataframe of water source route framework analysis
+#     """
 
-    # list of function inputs
-    input_args = locals()
+#     # list of function inputs
+#     input_args = locals()
 
-    # check function arguments for missing/invalid inputs
-    arg_lst = utils._check_args(
-        arg_dict = input_args,
-        ignore   = ["api_key"],
-        f        = any
-        )
+#     # check function arguments for missing/invalid inputs
+#     arg_lst = utils._check_args(
+#         arg_dict = input_args,
+#         ignore   = ["api_key"],
+#         f        = any
+#         )
     
-    # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
-    if arg_lst is not None:
-        raise Exception(arg_lst)
+#     # if an error statement is returned (not None), then raise exception with dynamic error message and stop function
+#     if arg_lst is not None:
+#         raise Exception(arg_lst)
     
-    #  base API URL
-    base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteanalysis/?"
+#     #  base API URL
+#     base = "https://dwr.state.co.us/Rest/GET/api/v2/analysisservices/watersourcerouteanalysis/?"
     
-    # maximum records per page
-    page_size  = 50000
+#     # maximum records per page
+#     page_size  = 50000
 
-    # initialize empty dataframe to store data from multiple pages
-    data_df    = pd.DataFrame()
+#     # initialize empty dataframe to store data from multiple pages
+#     data_df    = pd.DataFrame()
 
-    # initialize first page index
-    page_index = 1
+#     # initialize first page index
+#     page_index = 1
 
-    # Loop through pages until there are no more pages to get
-    more_pages = True
+#     # Loop through pages until there are no more pages to get
+#     more_pages = True
 
-    print("Retrieving DWR source route analysis")
+#     print("Retrieving DWR source route analysis")
 
-    # Loop through pages until last page of data is found, binding each response dataframe together
-    while more_pages == True:
+#     # Loop through pages until last page of data is found, binding each response dataframe together
+#     while more_pages == True:
 
-        # create query URL string
-        url = (
-            f'{base}format=json&dateFormat=spaceSepToSeconds'
-            f'&ltGnisId={lt_gnis_id or ""}'
-            f'&ltStreamMile={lt_stream_mile or ""}'
-            f'&utGnisId={ut_gnis_id or ""}'
-            f'&utStreamMile={ut_stream_mile or ""}'
-            f'&pageSize={page_size}&pageIndex={page_index}'
-            )
+#         # create query URL string
+#         url = (
+#             f'{base}format=json&dateFormat=spaceSepToSeconds'
+#             f'&ltGnisId={lt_gnis_id or ""}'
+#             f'&ltStreamMile={lt_stream_mile or ""}'
+#             f'&utGnisId={ut_gnis_id or ""}'
+#             f'&utStreamMile={ut_stream_mile or ""}'
+#             f'&pageSize={page_size}&pageIndex={page_index}'
+#             )
 
-        # If an API key is provided, add it to query URL
-        if api_key is not None:
-            # Construct query URL w/ API key
-            url = url + "&apiKey=" + str(api_key)
+#         # If an API key is provided, add it to query URL
+#         if api_key is not None:
+#             # Construct query URL w/ API key
+#             url = url + "&apiKey=" + str(api_key)
 
-        # make API call w/ error handling
-        cdss_req = utils._parse_gets(
-            url      = url, 
-            arg_dict = input_args,
-            ignore   = None
-            )
+#         # make API call w/ error handling
+#         cdss_req = utils._parse_gets(
+#             url      = url, 
+#             arg_dict = input_args,
+#             ignore   = None
+#             )
 
-        # extract dataframe from list column
-        cdss_df = cdss_req.json()
-        cdss_df = pd.DataFrame(cdss_df)
-        cdss_df = cdss_df["ResultList"].apply(pd.Series)
+#         # extract dataframe from list column
+#         cdss_df = cdss_req.json()
+#         cdss_df = pd.DataFrame(cdss_df)
+#         cdss_df = cdss_df["ResultList"].apply(pd.Series)
 
-        # bind data from this page
-        data_df = pd.concat([data_df, cdss_df])
+#         # bind data from this page
+#         data_df = pd.concat([data_df, cdss_df])
 
-        # Check if more pages to get to continue/stop while loop
-        if len(cdss_df.index) < page_size:
-            more_pages = False
-        else:
-            page_index += 1
+#         # Check if more pages to get to continue/stop while loop
+#         if len(cdss_df.index) < page_size:
+#             more_pages = False
+#         else:
+#             page_index += 1
 
-    return data_df
+#     return data_df
 
 # -------------------------
 # ---- Utils functions ----
