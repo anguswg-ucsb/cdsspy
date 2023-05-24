@@ -6,7 +6,7 @@ import shapely
 import pyproj
 
 # from cdsspy.utils import utils2
-from src.cdsspy import utils
+from cdsspy import utils
 
 def get_reference_tbl(
     table_name = None,

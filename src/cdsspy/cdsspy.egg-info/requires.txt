@@ -1,6 +1,0 @@
-pandas
-datetime
-requests
-geopandas
-shapely
-pyproj
