@@ -41,7 +41,7 @@ def get_climate_stations(
     input_args = locals()
 
     # check function arguments for missing/invalid inputs
-    arg_lst = utils2._check_args(
+    arg_lst = utils._check_args(
         arg_dict = input_args,
         ignore   = ["api_key"],
         f        = all
@@ -52,7 +52,7 @@ def get_climate_stations(
         raise Exception(arg_lst)
     
     # check and extract spatial data from 'aoi' and 'radius' args for location search query
-    aoi_lst = utils2._check_aoi(
+    aoi_lst = utils._check_aoi(
         aoi    = aoi,
         radius = radius
         )
@@ -63,7 +63,7 @@ def get_climate_stations(
     radius = aoi_lst[2]
 
     # collapse site_id list, tuple, vector of site_id into query formatted string
-    site_id = utils2._collapse_vector(
+    site_id = utils._collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
@@ -109,7 +109,7 @@ def get_climate_stations(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = utils2._parse_gets(
+        cdss_req = utils._parse_gets(
             url      = url, 
             arg_dict = input_args,
             ignore   = None
@@ -130,7 +130,7 @@ def get_climate_stations(
             page_index += 1
     
     # mask data if necessary
-    data_df = utils2._aoi_mask(
+    data_df = utils._aoi_mask(
         aoi = aoi,
         pts = data_df
         )
@@ -161,7 +161,7 @@ def get_climate_frostdates(
     input_args = locals()
 
     # check function arguments for missing/invalid inputs
-    arg_lst = utils2._check_args(
+    arg_lst = utils._check_args(
         arg_dict = input_args,
         ignore   = ["api_key", "start_date", "end_date"],
         f        = any
@@ -175,14 +175,14 @@ def get_climate_frostdates(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationfrostdates/?"
     
     # parse start_date into query string format
-    start_year = utils2._parse_date(
+    start_year = utils._parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_year = utils2._parse_date(
+    end_year = utils._parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -220,7 +220,7 @@ def get_climate_frostdates(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = utils2._parse_gets(
+        cdss_req = utils._parse_gets(
             url      = url, 
             arg_dict = input_args,
             ignore   = None
@@ -282,7 +282,7 @@ def _get_climate_ts_day(
     input_args = locals()
 
     # check function arguments for missing/invalid inputs
-    arg_lst = utils2._check_args(
+    arg_lst = utils._check_args(
         arg_dict = input_args,
         ignore   = ["api_key", "start_date", "end_date"],
         f        = all
@@ -296,20 +296,20 @@ def _get_climate_ts_day(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsday/?"
 
     # collapse list, tuple, vector of site_id into query formatted string
-    site_id = utils2._collapse_vector(
+    site_id = utils._collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = utils2._parse_date(
+    start_date = utils._parse_date(
         date   = start_date,
         start  = True,
         format = "%m-%d-%Y"
     )
 
     # parse end_date into query string format
-    end_date = utils2._parse_date(
+    end_date = utils._parse_date(
         date   = end_date,
         start  = False,
         format = "%m-%d-%Y"
@@ -349,7 +349,7 @@ def _get_climate_ts_day(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = utils2._parse_gets(
+        cdss_req = utils._parse_gets(
             url      = url, 
             arg_dict = input_args,
             ignore   = None
@@ -408,7 +408,7 @@ def _get_climate_ts_month(
     input_args = locals()
 
     # check function arguments for missing/invalid inputs
-    arg_lst = utils2._check_args(
+    arg_lst = utils._check_args(
         arg_dict = input_args,
         ignore   = ["api_key", "start_date", "end_date"],
         f        = all
@@ -422,20 +422,20 @@ def _get_climate_ts_month(
     base = "https://dwr.state.co.us/Rest/GET/api/v2/climatedata/climatestationtsmonth/?"
 
     # collapse list, tuple, vector of site_id into query formatted string
-    site_id = utils2._collapse_vector(
+    site_id = utils._collapse_vector(
         vect = site_id, 
         sep  = "%2C+"
         )
 
     # parse start_date into query string format
-    start_date = utils2._parse_date(
+    start_date = utils._parse_date(
         date   = start_date,
         start  = True,
         format = "%Y"
     )
 
     # parse end_date into query string format
-    end_date = utils2._parse_date(
+    end_date = utils._parse_date(
         date   = end_date,
         start  = False,
         format = "%Y"
@@ -475,7 +475,7 @@ def _get_climate_ts_month(
             url = url + "&apiKey=" + str(api_key)
 
         # make API call w/ error handling
-        cdss_req = utils2._parse_gets(
+        cdss_req = utils._parse_gets(
             url      = url, 
             arg_dict = input_args,
             ignore   = None
@@ -540,7 +540,7 @@ def get_climate_ts(
     input_args = locals()
 
     # check function arguments for missing/invalid inputs
-    arg_lst = utils2._check_args(
+    arg_lst = utils._check_args(
         arg_dict = input_args,
         ignore  = ["api_key", "start_date", "end_date", "timescale"],
         f       = all
