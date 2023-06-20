@@ -177,6 +177,7 @@ This gif highlights the masking process that happens when the **`aoi`** argument
 <br>
 <br>
 
+
 ## **Retrieve time series data** 
 
 The functions in the table below retrieve time series data from the various time series related CDSS API endpoints.  
