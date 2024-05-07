@@ -1,5 +1,5 @@
 # __init__.py
-# __version__ = "1.2.70"
+# __version__ = "1.2.71"
 from .admin_calls import *
 from .analysis_services import *
 from .climate import *

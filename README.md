@@ -1,4 +1,4 @@
-# **cdsspy** <img src="https://cdsspy-images.s3.us-west-1.amazonaws.com/co_dnr_div_cdss_cwcbdwr_transparent.png" align="right" width="25%" />
+# **cdsspy** <img src="img/co_dnr_div_cdss_cwcbdwr_transparent.png" align="right" width="25%" />
 
 <!-- badges: start -->
 
@@ -137,7 +137,7 @@ stations  = cdsspy.get_telemetry_stations(
     )
 ```
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/county_telem_stations2.png)
+![](img/county_telem_stations2.png)
 
 <br>
 <br>
@@ -152,7 +152,7 @@ stations  = cdsspy.get_telemetry_stations(
     )
 ```
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/poi_telem_stations.png)
+![](img/poi_telem_stations.png)
 
 <br>
 <br>
@@ -163,14 +163,14 @@ A masking operation is performed when a location search is done using a **polygo
 ```python
 # identify telemetry stations 15 miles around the centroid of a polygon
 stations  = cdsspy.get_telemetry_stations(
-    aoi    = geopandas.read_file("https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_county.gpkg")
+    aoi    = geopandas.read_file("example-data/boulder_county.gpkg")
     radius = 15
     )
 ```
 
 This gif highlights the masking process that happens when the **`aoi`** argument is given a **polygon** 
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/boulder_telem_stations_poly2.gif)
+![](img/boulder_telem_stations_poly2.gif)
 
 <br>
 <br>
@@ -212,7 +212,7 @@ discharge_ts   = cdsspy.get_telemetry_ts(
     )
 ```
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/discharge_timeseries_plot2.png)
+![](img/discharge_timeseries_plot2.png)
 
 <br>
 <br>
@@ -246,7 +246,7 @@ diversion_rec  = cdsspy.get_structures_divrec_ts(
 ```
 **Note:** Data availability can vary between structures (i.e. Missing data, not all structures have every data type/temporal resolution available, etc.) 
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/divrec_facet_plot.png)
+![](img/divrec_facet_plot.png)
 
 <br>
 <br>
@@ -276,4 +276,4 @@ well_measure = cdsspy.get_gw_wl_wellmeasures(
     )
 ```
 
-![](https://cdsspy-images.s3.us-west-1.amazonaws.com/gw_depth_to_water_plot2.png)
+![](img/gw_depth_to_water_plot2.png)
